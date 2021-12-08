@@ -164,14 +164,37 @@ class TextRenderObject extends RenderObject{
 }
 
 class ArrowRenderObject extends RenderObject {
-    constructor(thickness, startPosition, finishPosition, color) {
+    constructor(startPosition, endPosition, color) {
         super(startPosition, color);
-        this.thickness = thickness;
-        this.finishPosition = finishPosition;
+        this.endPosition = endPosition;
     }
 
     draw(ctx, rendererReference) {
-        //TODO ARROW
+        let canvasStartPosition = rendererReference.worldToCanvasPosition(this.position);
+        let canvasEndPosition = rendererReference.worldToCanvasPosition(this.endPosition);
+
+        ctx.fillStyle = this.color;
+
+        //Draws an Arrow. Code from https://riptutorial.com/html5-canvas/example/18136/line-with-arrowheads
+        var aWidth = 5;
+        var aLength = 8;
+        
+        var dx=canvasEndPosition.x-canvasStartPosition.x;
+        var dy=canvasEndPosition.y-canvasStartPosition.y;
+        var angle=Math.atan2(dy,dx);
+        var length=Math.sqrt(dx*dx+dy*dy);
+
+        ctx.translate(canvasStartPosition.x,canvasStartPosition.y);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(0,0);
+        ctx.lineTo(length,0);
+        ctx.moveTo(length-aLength,-aWidth);
+        ctx.lineTo(length,0);
+        ctx.lineTo(length-aLength,aWidth);
+
+        ctx.stroke();
+        ctx.setTransform(1,0,0,1,0,0);
     }
 }
 
@@ -184,7 +207,7 @@ class CircleRenderObject extends RenderObject {
     draw(ctx, rendererReference) {
         ctx.fillStyle = this.color;
         
-        let canvasPosition = rendererReference.worldToCanvasFunc(this.position);
+        let canvasPosition = rendererReference.worldToCanvasPosition(this.position);
         ctx.arc(canvasPosition.x, canvasPosition.y, 50, 0, 2 * Math.PI);
     }
 }
