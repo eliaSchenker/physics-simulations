@@ -208,7 +208,10 @@ class CircleRenderObject extends RenderObject {
         ctx.fillStyle = this.color;
 
         let canvasPosition = rendererReference.worldToCanvasPosition(this.position);
-        ctx.arc(canvasPosition.x, canvasPosition.y, 50, 0, 2 * Math.PI);
+        let finishPosition = rendererReference.worldToCanvasPosition(new Vector2(this.position.x + this.radius, 0));
+        ctx.beginPath();
+        ctx.arc(canvasPosition.x, canvasPosition.y, finishPosition.x - canvasPosition.x, 0, 2 * Math.PI);
+        ctx.stroke();
     }
 }
 
@@ -224,12 +227,12 @@ class RectRenderObject extends RenderObject {
         ctx.fillStyle = this.color;
 
         let canvasPosition = rendererReference.worldToCanvasPosition(this.position);
-        let canvasSize = rendererReference.worldToCanvasPosition(this.size);
+        let targetPosition = rendererReference.worldToCanvasPosition(new Vector2(this.position.x + this.size.x, this.position.y + this.size.y));
         ctx.beginPath();
         if(this.filled) {
-            ctx.fillRect(canvasPosition.x, canvasPosition.y, canvasSize.x, canvasSize.y);
+            ctx.fillRect(canvasPosition.x, canvasPosition.y, targetPosition.x - canvasPosition.x, targetPosition.y - canvasPosition.y);
         }else {
-            ctx.rect(canvasPosition.x, canvasPosition.y, canvasSize.x, canvasSize.y);
+            ctx.rect(canvasPosition.x, canvasPosition.y, targetPosition.x - canvasPosition.x, targetPosition.y - canvasPosition.y);
         }
         ctx.stroke();
     }

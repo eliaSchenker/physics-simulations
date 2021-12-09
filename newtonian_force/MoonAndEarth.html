@@ -15,10 +15,10 @@
     var sim;
     var renderer;
     function init() {
-        var moon = new PhysicalBody(7.34767309e22, 1737400, new Vector2(-384400, 0), new Vector2(0, 0));
+        var moon = new PhysicalBody(7.34767309e22, 1737400, new Vector2(-384400000, 0), new Vector2(0, 0));
         var earth = new PhysicalBody(5.972e24, 6371000, new Vector2(0, 0), new Vector2(0, 0));
         var canvas = document.getElementById("canvas");
-        renderer = new Renderer(canvas, 400000, 400000);
+        renderer = new Renderer(canvas, 800000000, 800000000);
         sim = new GravitationalSimulation(renderer);
         sim.addBody(moon);
         sim.addBody(earth);
