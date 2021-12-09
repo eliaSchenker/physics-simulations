@@ -206,7 +206,7 @@ class CircleRenderObject extends RenderObject {
 
     draw(ctx, rendererReference) {
         ctx.fillStyle = this.color;
-        
+
         let canvasPosition = rendererReference.worldToCanvasPosition(this.position);
         ctx.arc(canvasPosition.x, canvasPosition.y, 50, 0, 2 * Math.PI);
     }

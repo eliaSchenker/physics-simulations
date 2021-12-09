@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body onload="init();">
+    <canvas width="500" height="500" style="border: 2px solid black;" id="canvas"></canvas>
+</body>
+<script src="GravitationalSimulation.js" type="text/javascript"></script>
+<script src="../Renderer.js" type="text/javascript"></script>
+<script>
+    var sim;
+    var renderer;
+    function init() {
+        var moon = new PhysicalBody(7.34767309e22, 1737400, new Vector2(-384400, 0), new Vector2(0, 0));
+        var earth = new PhysicalBody(5.972e24, 6371000, new Vector2(0, 0), new Vector2(0, 0));
+        var canvas = document.getElementById("canvas");
+        renderer = new Renderer(canvas, 400000, 400000);
+        sim = new GravitationalSimulation(renderer);
+        sim.addBody(moon);
+        sim.addBody(earth);
+    }
+</script>
+</html>
