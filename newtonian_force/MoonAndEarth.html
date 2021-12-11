@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Moon and Earth Simulation</title>
 </head>
 <style>
     canvas {
@@ -26,7 +26,7 @@
     <div id="controlDiv">
     <p id="timeWarpText">Speed of time (1 second is 1 second):</p>
     <input type="range" min=1 max=1180290 onchange="timeWarpSliderChange();" value=1 id="timeWarpSlider">
-    <p id="radiusText">Radius (384400 km):</p>
+    <p id="radiusText">Radius r (384400 km):</p>
     <input type="range" min=50000 max=384400 onchange="resetSimulation();" value=384400 id="radiusSlider">
     <div>
         <p>Force between earth and moon:</p>
@@ -35,7 +35,7 @@
               <mrow>
                 <msub>
                   <mi>F</mi>
-                  <mn>moonEarth</mn>
+                  <mn>MoonEarth</mn>
                 </msub>
                 <mo>=</mo>
                 <mi>G</mi>
@@ -102,9 +102,12 @@
                     </msub>
                     <mo>=</mo>
                     <mfrac>
-                        <mi>F</mi>
                         <msub>
-                            <mi>M</mi>
+                            <mi>F</mi>
+                            <mi>MoonEarth</mi>
+                        </msub>
+                        <msub>
+                            <mi>Mass</mi>
                             <mi>moon</mi>
                         </msub>
                     </mfrac>
@@ -133,7 +136,7 @@
                 </mrow>
             </math>
         </div>
-        <p>Required Initial Velocity for orbit:</p>
+        <p>Required initial velocity for orbit:</p>
         <div class="mathdiv">
         
         </div>
@@ -167,7 +170,7 @@
             </math>
         </div>
     </div>
-    <p style="margin-top:50px;">© Elia Schenker 2021</p>
+    <p style="margin-top:50px;"><a href="https://eliaschenker.com" target="_blank">© Elia Schenker 2021</a></p>
     </div>
    
 </body>
@@ -217,7 +220,7 @@
         document.getElementById("acceleration1").innerText = acceleration + "m/s";
         document.getElementById("acceleration2").innerText = acceleration + "m/s";
 
-        document.getElementById("radiusText").innerText = "Radius (" + (radius / 1000) + " km): ";
+        document.getElementById("radiusText").innerText = "Radius r (" + (radius / 1000) + " km): ";
 
         //Configure the Simulation
         var moon = new PhysicalBody(7.34767309e22, 1737400, new Vector2(-radius, 0), new Vector2(0, velocity), "Moon");
