@@ -1,5 +1,5 @@
 class GravitationalSimulation {
-    static gravitationalConstant = 6.672e-11;
+    static gravitationalConstant = 6.67408e-11;
 
     constructor(renderer, physicsTickSpeed=0.01) {
         this.renderer = renderer;
@@ -19,19 +19,35 @@ class GravitationalSimulation {
 
         //Setup timewarp
         this.timeWarp = 1;
-    }
 
+        this.isDocumentHidden = false;
+    }
 
 
     addBody(body) {
         this.physicalBodies.push(body);
     }
 
+
     tick() {
-        if(!this.paused) {
+        if(document.hidden && !this.isDocumentHidden) {
+            this.isDocumentHidden = true;
+        }
+
+        //When the document becomes visible again reset the time
+        if(!document.hidden && this.isDocumentHidden) {
+            this.isDocumentHidden = false;
+            this.lastTickEnd = new Date();
+        }
+
+        if(!this.paused && ! this.isDocumentHidden) {
           this.physicsTick();
         }
         this.render();
+    }
+
+    destroy() {
+        clearInterval(this.interval);
     }
 
     physicsTick() {
@@ -40,12 +56,11 @@ class GravitationalSimulation {
         
         //Based on this, calculate the time difference between the next tick
         let deltaT = (currentTickStart.getTime() - this.lastTickEnd.getTime()) / 1000;
-
+        
         for(var i = 0;i<this.physicalBodies.length;i++) {
             var acceleration = new Vector2(0, 0);
 
             for(var j = 0;j<this.physicalBodies.length;j++) {
-                
                 //Don't calculate the influence the body has on itself
                 if(i != j) {
                     var force = this.calculateForce(this.physicalBodies[i], this.physicalBodies[j]);
@@ -97,26 +112,40 @@ class GravitationalSimulation {
         for(var i = 0;i<this.physicalBodies.length;i++) {
             //Render Objects
             this.renderer.render_circle(this.physicalBodies[i].radius, this.physicalBodies[i].position);
+            this.renderer.render_text("15px Arial", this.physicalBodies[i].name, new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].radius * 1.2, this.physicalBodies[i].position.y));
 
             //Render Trails
             if(this.displayTrails) {
                 for(var j = 0; j<this.physicalBodies[i].trailPoints.length - 1;j++) {
-                    this.renderer.render_line(this.physicalBodies[i].trailPoints[j], this.physicalBodies[i].trailPoints[j + 1]);
+                    this.renderer.render_line(this.physicalBodies[i].trailPoints[j], this.physicalBodies[i].trailPoints[j + 1], 0.25);
                 }
             }
         }
+        /*
+        var xDifference = this.physicalBodies[1].position.x - this.physicalBodies[0].position.x;
+        var s = ((this.physicalBodies[1].position.y - this.physicalBodies[0].position.y) / (xDifference));
+        if(this.physicalBodies[1].position.x > this.physicalBodies[0].position.x) {
+            var deltaX = 50000000/Math.sqrt(1 + Math.pow(s, 2));
+        }else {
+            var deltaX = -50000000/Math.sqrt(1 + Math.pow(s, 2));
+        }
+        var deltaY = s * deltaX;
+        var targetVector = new Vector2(this.physicalBodies[0].position.x + deltaX , this.physicalBodies[0].position.y + deltaY);
+        this.renderer.render_arrow(this.physicalBodies[0].position, targetVector);
+        this.renderer.render_text("15px Arial", "a", new Vector2(targetVector.x + deltaX / 5, targetVector.y + deltaY / 5));*/
         this.renderer.render_frame();
     }
 }
 
 class PhysicalBody {
-    constructor(mass, radius, initialPosition, initialVelocity, fixPosition=false) {
+    constructor(mass, radius, initialPosition, initialVelocity, name, fixPosition=false) {
         this.mass = mass;
         this.radius = radius;
         this.position = initialPosition;
         this.velocity = initialVelocity;
+        this.name = name;
+        this.fixPosition = fixPosition;
         this.trailPoints = [];
-        this.fixPosition = fixPosition
     }
 
     updateVelocity(acceleration, timeDifference) {

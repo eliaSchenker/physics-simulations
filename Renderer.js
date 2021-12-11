@@ -34,8 +34,8 @@ class Renderer {
         this.toRenderObjects.push(new RectRenderObject(position, size, color, filled));
     }
 
-    render_line(startPosition, endPosition, color="#000000") {
-        this.toRenderObjects.push(new LineRenderObject(startPosition, endPosition, color));
+    render_line(startPosition, endPosition, lineWidth = 1, color="#000000") {
+        this.toRenderObjects.push(new LineRenderObject(startPosition, endPosition, lineWidth, color));
     }
 
     /**
@@ -239,9 +239,10 @@ class RectRenderObject extends RenderObject {
 }
 
 class LineRenderObject extends RenderObject {
-    constructor(startPosition, endPosition, color) {
+    constructor(startPosition, endPosition, lineWidth, color) {
         super(startPosition, color);
         this.endPosition = endPosition;
+        this.lineWidth = lineWidth;
     }
 
     draw(ctx, rendererReference) {
@@ -251,9 +252,12 @@ class LineRenderObject extends RenderObject {
         ctx.fillStyle = this.color;
 
         ctx.beginPath();
+        var originalLineWidth = ctx.lineWidth;
+        ctx.lineWidth = this.lineWidth;
         ctx.moveTo(canvasStartPosition.x, canvasStartPosition.y);
         ctx.lineTo(canvasEndPosition.x, canvasEndPosition.y);
         ctx.stroke();
+        ctx.lineWidth = originalLineWidth;
     }
 }
 
