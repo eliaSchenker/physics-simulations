@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System</title>
+</head>
+<style>
+    canvas {
+        border: 2px solid black;
+        float: left;
+    }
+
+    #controlDiv {
+        float: left;
+        margin-left:10px;
+    }
+
+    .mathdiv {
+        font-size:150%;
+    }
+</style>
+<body onload="resetSimulation();">
+    <canvas width="750" height="750" id="canvas"></canvas>
+    <div id="controlDiv">
+        <p id="timeWarpText">Speed of time (1 second is 1 second):</p>
+        <input type="range" min=1 max=8640000 onchange="timeWarpSliderChange();" value=1 id="timeWarpSlider">
+        <button onclick="focusInner();">Focus on inner Solar System</button>
+        <button onclick="focusOuter();">Focus on outer Solar System</button>
+        <p style="margin-top:50px;"><a href="https://eliaschenker.com" target="_blank">© Elia Schenker 2021</a></p>
+    </div>
+</body>
+<script src="GravitationalSimulation.js" type="text/javascript"></script>
+<script src="../Renderer.js" type="text/javascript"></script>
+<script src="../util/DateUtil.js" type="text/javascript"></script>
+<script src="../util/SIUtil.js" type="text/javascript"></script>
+<script>
+    function resetSimulation() {
+        //Prepare Planets
+        var sun = new PhysicalBody(1.989e30, 696340000, new Vector2(0, 0), new Vector2(0, 0), "Sun", true);
+        var mercury = new PhysicalBody(3.285e23, 2439700, new Vector2(SIUtil.AUtoMeters(0.4), 0), new Vector2(0, 40000), "Mercury");
+        var venus = new PhysicalBody(4.867e24, 6051800, new Vector2(SIUtil.AUtoMeters(0.7), 0), new Vector2(0, 35021), "Venus");
+        var earth = new PhysicalBody(5.972e24, 6371000, new Vector2(SIUtil.AUtoMeters(1), 0), new Vector2(0, 30000), "Earth");
+        var mars = new PhysicalBody(6.39e23, 3389500, new Vector2(SIUtil.AUtoMeters(1.5), 0), new Vector2(0, 24130), "Mars");
+        var jupiter = new PhysicalBody(1.898e27, 69911000, new Vector2(SIUtil.AUtoMeters(5.2), 0), new Vector2(0, 13069), "Jupiter");
+        var saturn = new PhysicalBody(5.683e26, 58232000, new Vector2(SIUtil.AUtoMeters(9.5), 0), new Vector2(0, 9672), "Saturn");
+        var uranus = new PhysicalBody(8.681e25, 25362000, new Vector2(SIUtil.AUtoMeters(19.8), 0), new Vector2(0, 6835), "Uranus");
+        var neptune = new PhysicalBody(1.024e26, 24622000, new Vector2(SIUtil.AUtoMeters(30), 0), new Vector2(0, 5430), "Neptune");
+        
+        var canvas = document.getElementById("canvas");
+        renderer = new Renderer(canvas, SIUtil.AUtoMeters(40) * 2, SIUtil.AUtoMeters(40) * 2);
+        renderer.cameraPosition = sun.position;
+        renderer.zoomAmount = 1.05;
+        sim = new GravitationalSimulation(renderer);
+        sim.trailPointLimit = 100;
+
+        sim.addBody(sun);
+        sim.addBody(mercury);
+        sim.addBody(venus);
+        sim.addBody(earth);
+        sim.addBody(mars);
+        sim.addBody(jupiter);
+        sim.addBody(saturn);
+        sim.addBody(uranus);
+        sim.addBody(neptune);
+
+        focusOuter();
+    }
+
+    function focusInner() {
+        renderer.zoomAmount = 0.15;
+        renderer.cameraPosition = sim.physicalBodies[0].position;
+    }
+
+    function focusOuter() {
+        renderer.zoomAmount = 0.8;
+        renderer.cameraPosition = sim.physicalBodies[0].position;
+    }
+
+    function timeWarpSliderChange() {
+        var value = document.getElementById("timeWarpSlider").value;
+        document.getElementById("timeWarpText").innerText = "Speed of time (1 second is " + DateUtil.secondsToText(value) + "):";
+        sim.timeWarp = value;
+    }
+</script>
+</html>
