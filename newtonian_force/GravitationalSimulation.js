@@ -1,6 +1,12 @@
 class GravitationalSimulation {
+    //Newtons gravitational constant
     static gravitationalConstant = 6.67408e-11;
 
+    /**
+     * Default Constructor of the GravitationalSimulation
+     * @param {Renderer} renderer the renderer object
+     * @param {Number} physicsTickSpeed the tick speed (time between ticks)
+     */
     constructor(renderer, physicsTickSpeed=0.01) {
         this.renderer = renderer;
         this.physicalBodies = [];
@@ -23,12 +29,18 @@ class GravitationalSimulation {
         this.isDocumentHidden = false;
     }
 
-
+    /**
+     * Add a body to the physicalBodies array
+     * @param {PhysicalBody} body The body to add
+     */
     addBody(body) {
         this.physicalBodies.push(body);
     }
 
 
+    /**
+     * One tick
+     */
     tick() {
         if(document.hidden && !this.isDocumentHidden) {
             this.isDocumentHidden = true;
@@ -40,16 +52,24 @@ class GravitationalSimulation {
             this.lastTickEnd = new Date();
         }
 
+        //If the simulation isn't paused and the window is active call the physicstick
         if(!this.paused && ! this.isDocumentHidden) {
           this.physicsTick();
         }
+        //Render the objects
         this.render();
     }
 
+    /**
+     * Finishes the simulation of this Simulation Object
+     */
     destroy() {
         clearInterval(this.interval);
     }
 
+    /**
+     * Physicstick: Calculate all the forces between the bodies and updates the velocities and positions using the acceleration
+     */
     physicsTick() {
         //Get the current time and date
         var currentTickStart = new Date(); 
@@ -58,17 +78,23 @@ class GravitationalSimulation {
         let deltaT = (currentTickStart.getTime() - this.lastTickEnd.getTime()) / 1000;
         
         for(var i = 0;i<this.physicalBodies.length;i++) {
-            var acceleration = new Vector2(0, 0);
+            var finalAcceleration = new Vector2(0, 0);
 
             for(var j = 0;j<this.physicalBodies.length;j++) {
                 //Don't calculate the influence the body has on itself
                 if(i != j) {
+                    //Calculate the force between the two bodies
                     var force = this.calculateForce(this.physicalBodies[i], this.physicalBodies[j]);
+                    //Calculate the acceleration using the force
                     var newAcceleration = this.calculateAcceleration(this.physicalBodies[i], this.physicalBodies[j], force);
-                    acceleration = new Vector2(acceleration.x + newAcceleration.x, acceleration.y + newAcceleration.y);
+                    //Add the new acceleration to the final acceleration
+                    finalAcceleration = new Vector2(finalAcceleration.x + newAcceleration.x, finalAcceleration.y + newAcceleration.y);
                 }
             }
-            this.physicalBodies[i].updateVelocity(acceleration, deltaT * this.timeWarp);
+
+            //Update the velocity of the body using acceleration and deltaT (multiply deltaT by the timeWarp)
+            this.physicalBodies[i].updateVelocity(finalAcceleration, deltaT * this.timeWarp);
+            //Update the position of the body using deltaT (multiply deltaT by the timeWarp)
             this.physicalBodies[i].updatePosition(deltaT * this.timeWarp);
 
             if(this.trailCounter == 10) {
@@ -87,11 +113,24 @@ class GravitationalSimulation {
         this.lastTickEnd = new Date();
     }
 
+    /**
+     * Calculates the force between two bodies
+     * @param {PhysicalBody} body1 The first body
+     * @param {PhysicalBody} body2 The second body
+     * @returns The force in newtons
+     */
     calculateForce(body1, body2) {
         var distance = body1.position.distanceTo(body2.position);
         return GravitationalSimulation.gravitationalConstant * body1.mass * body2.mass / Math.pow(distance, 2)
     }
 
+    /**
+     * Calculates the acceleration acting on body 1 in direction of body2 using a force F
+     * @param {PhysicalBody} body1 The first body
+     * @param {PhysicalBody} body2 The second body
+     * @param {Number} force The force in newtons
+     * @returns Acceleration in (m/s)^2
+     */
     calculateAcceleration(body1, body2, force) {
         //Calculate the direction of the force
         var dir = new Vector2(body2.position.x - body1.position.x, 
@@ -107,6 +146,9 @@ class GravitationalSimulation {
         return acceleration;
     }
 
+    /**
+     * Renders the physicalBodies using the renderer
+     */
     render() {
         this.renderer.reset_render_objects();
         for(var i = 0;i<this.physicalBodies.length;i++) {
@@ -121,23 +163,23 @@ class GravitationalSimulation {
                 }
             }
         }
-        /*
-        var xDifference = this.physicalBodies[1].position.x - this.physicalBodies[0].position.x;
-        var s = ((this.physicalBodies[1].position.y - this.physicalBodies[0].position.y) / (xDifference));
-        if(this.physicalBodies[1].position.x > this.physicalBodies[0].position.x) {
-            var deltaX = 50000000/Math.sqrt(1 + Math.pow(s, 2));
-        }else {
-            var deltaX = -50000000/Math.sqrt(1 + Math.pow(s, 2));
-        }
-        var deltaY = s * deltaX;
-        var targetVector = new Vector2(this.physicalBodies[0].position.x + deltaX , this.physicalBodies[0].position.y + deltaY);
-        this.renderer.render_arrow(this.physicalBodies[0].position, targetVector);
-        this.renderer.render_text("15px Arial", "a", new Vector2(targetVector.x + deltaX / 5, targetVector.y + deltaY / 5));*/
         this.renderer.render_frame();
     }
 }
 
+/**
+ * Object which represents a Physicalbody
+ */
 class PhysicalBody {
+    /**
+     * Default constructor of the PhysicalBody Object
+     * @param {Number} mass Mass of the body
+     * @param {Number} radius Radius of the body
+     * @param {Vector2} initialPosition Position of the body (vector)
+     * @param {Vector2} initialVelocity Velocity of the body (vector)
+     * @param {String} name Name of the body
+     * @param {Boolean} fixPosition Should the position of the body be fixed (not affected by other bodies)
+     */
     constructor(mass, radius, initialPosition, initialVelocity, name, fixPosition=false) {
         this.mass = mass;
         this.radius = radius;
@@ -148,19 +190,28 @@ class PhysicalBody {
         this.trailPoints = [];
     }
 
-    updateVelocity(acceleration, timeDifference) {
+    /**
+     * Update the velocity of the body using an acceleration and the change in time
+     * @param {Vector2} acceleration Acceleration
+     * @param {Number} deltaT Change in time
+     */
+    updateVelocity(acceleration, deltaT) {
         //new velocity = current velocity + Δv
         //Δv = a * Δt
-        this.velocity = new Vector2(this.velocity.x + acceleration.x * timeDifference, 
-            this.velocity.y + acceleration.y * timeDifference);
+        this.velocity = new Vector2(this.velocity.x + acceleration.x * deltaT, 
+            this.velocity.y + acceleration.y * deltaT);
     }
 
-    updatePosition(timeDifference) {
+    /**
+     * Update the position of the body using the current velocity and a change in time
+     * @param {Number} deltaT Change in time
+     */
+    updatePosition(deltaT) {
         //new position = current position + Δs
         //Δs = v * Δt
         if(!this.fixPosition) {
-            this.position = new Vector2(this.position.x + this.velocity.x * timeDifference,
-            this.position.y + this.velocity.y * timeDifference);
+            this.position = new Vector2(this.position.x + this.velocity.x * deltaT,
+            this.position.y + this.velocity.y * deltaT);
         }
     }
 }
