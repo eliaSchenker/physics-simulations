@@ -22,7 +22,7 @@
     }
 </style>
 <body onload="resetSimulation();">
-    <canvas width="700" height="750" id="canvas"></canvas>
+    <canvas width="750" height="750" id="canvas"></canvas>
     <div id="controlDiv">
     <p id="timeWarpText">Speed of time (1 second is 1 second):</p>
     <input type="range" min=1 max=1180290 onchange="timeWarpSliderChange();" value=1 id="timeWarpSlider">
@@ -176,19 +176,13 @@
 </body>
 <script src="GravitationalSimulation.js" type="text/javascript"></script>
 <script src="../Renderer.js" type="text/javascript"></script>
+<script src="../util/DateUtil.js" type="text/javascript"></script>
+<script src="../util/SIUtil.js" type="text/javascript"></script>
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <script>
     var sim;
     var renderer;
-
-    function getMantisse(number) {
-        return number.toExponential().split("e")[0];
-    }
-
-    function getExponent(number) {
-        return number.toExponential().split("e")[1].replace("+", "").replace("-", "");
-    }
 
     function resetSimulation() {
         if(sim != undefined) {
@@ -207,15 +201,15 @@
         //Set all the texts in the formulas
         document.getElementById("velocity").innerText = Math.round(velocity * 100) / 100 + "m/s";
 
-        document.getElementById("radius1").innerText = Math.round(getMantisse(radius) * 100) / 100 + " * 10";
-        document.getElementById("radius1Expo").innerText = getExponent(radius);
-        document.getElementById("radius2").innerText = Math.round(getMantisse(radius) * 100) / 100 + " * 10";
-        document.getElementById("radius2Expo").innerText = getExponent(radius);
+        document.getElementById("radius1").innerText = Math.round(SIUtil.getMantisse(radius) * 100) / 100 + " * 10";
+        document.getElementById("radius1Expo").innerText = SIUtil.getExponent(radius);
+        document.getElementById("radius2").innerText = Math.round(SIUtil.getMantisse(radius) * 100) / 100 + " * 10";
+        document.getElementById("radius2Expo").innerText = SIUtil.getExponent(radius);
 
-        document.getElementById("force").innerText =  Math.round(getMantisse(force) * 100) / 100 + " * 10";
-        document.getElementById("forceExpo").innerText =  getExponent(force);
-        document.getElementById("force2").innerText =  Math.round(getMantisse(force) * 100) / 100 + " * 10";
-        document.getElementById("forceExpo2").innerText =  getExponent(force);
+        document.getElementById("force").innerText =  Math.round(SIUtil.getMantisse(force) * 100) / 100 + " * 10";
+        document.getElementById("forceExpo").innerText =  SIUtil.getExponent(force);
+        document.getElementById("force2").innerText =  Math.round(SIUtil.getMantisse(force) * 100) / 100 + " * 10";
+        document.getElementById("forceExpo2").innerText =  SIUtil.getExponent(force);
 
         document.getElementById("acceleration1").innerText = acceleration + "m/s";
         document.getElementById("acceleration2").innerText = acceleration + "m/s";
@@ -238,65 +232,9 @@
         timeWarpSliderChange();
     }
 
-    function getDateText(seconds) {
-
-        // calculate (and subtract) whole days
-        var days = Math.floor(seconds / 86400);
-        seconds -= days * 86400;
-
-        // calculate (and subtract) whole hours
-        var hours = Math.floor(seconds / 3600) % 24;
-        seconds -= hours * 3600;
-
-        // calculate (and subtract) whole minutes
-        var minutes = Math.floor(seconds / 60) % 60;
-        seconds -= minutes * 60;
-
-        // what's left is seconds
-        var secondsRemainder = seconds % 60;
-
-        var daysText = "";
-        if(days != 0) {
-            if(days != 1) {
-                daysText = days + " days ";
-            }else {
-                daysText = days + " day ";
-            }
-        }
-
-        var hoursText = "";
-        if(hours != 0) {
-            if(hours != 1) {
-                hoursText = hours + " hours ";
-            }else {
-                hoursText = hours + " hour ";
-            }
-        }
-
-        var minutesText = "";
-        if(minutes != 0) {
-            if(minutes != 1) {
-                minutesText = minutes + " minutes ";
-            }else {
-                minutesText = minutes + " minute ";
-            }
-        }
-
-        var secondsText = "";
-        if(seconds != 0) {
-            if(seconds != 1) {
-                secondsText = seconds + " seconds";
-            }else {
-                secondsText = seconds + " second";
-            }
-        }
-
-        return daysText + hoursText + minutesText + secondsText;
-    }
-
     function timeWarpSliderChange() {
         var value = document.getElementById("timeWarpSlider").value;
-        document.getElementById("timeWarpText").innerText = "Speed of time (1 second is " + getDateText(value) + "):";
+        document.getElementById("timeWarpText").innerText = "Speed of time (1 second is " + DateUtil.secondsToText(value) + "):";
         sim.timeWarp = value;
     }
 </script>
