@@ -1,4 +1,10 @@
 class Renderer {
+    /**
+     * Default Constructor of the Renderer
+     * @param {Canvas} canvas Canvas object
+     * @param {Number} cameraXSize Camera width in meters
+     * @param {Number} cameraYSize Camera height in meters
+     */
     constructor(canvas, cameraXSize, cameraYSize) {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");    
@@ -14,26 +20,63 @@ class Renderer {
         this.prepareDragEvent();
     }
 
+    /**
+     * Reset the render objects array (which objects to render on the next frame)
+     */
     reset_render_objects() {
         this.toRenderObjects = [];
     }
     
+    /**
+     * Render a text
+     * @param {String} font The font of the text
+     * @param {String} text The text to draw
+     * @param {Vector2} position The position of the text
+     * @param {String} color The color of the text (optional)
+     */
     render_text(font, text, position, color="#000000") {
         this.toRenderObjects.push(new TextRenderObject(font, text, position, color));
     }
 
+    /**
+     * Draw an arrow 
+     * @param {Number} thickness Thickness of the arrow lines
+     * @param {Vector2} startPosition Startposition
+     * @param {Vector2} finishPosition Finishposition
+     * @param {String} color Color of the arrow (optional)
+     */
     render_arrow(thickness, startPosition, finishPosition, color="#000000") {
         this.toRenderObjects.push(new ArrowRenderObject(thickness, startPosition, finishPosition, color));
     }
 
+    /**
+     * Draw a circle
+     * @param {Number} radius Radius of the circle
+     * @param {Vector2} position Position of the center of the circle
+     * @param {String} color Color of the circle (optional)
+     */
     render_circle(radius, position, color="#000000") {
         this.toRenderObjects.push(new CircleRenderObject(radius, position, color));
     }
 
+    /**
+     * Render a rectangle
+     * @param {Vector2} position Position of the bottom-left corner of the Rectangle 
+     * @param {Vector2} size Size of the rectangle (Width, Height)
+     * @param {String} color Color of the rectangle (optional)
+     * @param {Boolean} filled Is the rectangle filled or not (optional)
+     */
     render_rect(position, size, color="#000000", filled=true) {
         this.toRenderObjects.push(new RectRenderObject(position, size, color, filled));
     }
 
+    /**
+     * Draw a line
+     * @param {Vector2} startPosition Start position of the line
+     * @param {Vector2} endPosition End position of the line
+     * @param {Number} lineWidth Width of the line (optional)
+     * @param {String} color Color of the line (optional)
+     */
     render_line(startPosition, endPosition, lineWidth = 1, color="#000000") {
         this.toRenderObjects.push(new LineRenderObject(startPosition, endPosition, lineWidth, color));
     }
@@ -48,6 +91,9 @@ class Renderer {
         }
     }
 
+    /**
+     * Clears the canvas
+     */
     clear_frame() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
@@ -140,20 +186,43 @@ class Renderer {
 
 }
 
+/**
+ * RenderObject (parent class of various render objects)
+ */
 class RenderObject {
+    /**
+     * Default constructor of Renderobject
+     * @param {Vector2} position 
+     * @param {String} color 
+     */
     constructor(position, color) {
         this.position = position;
         this.color = color;
     }    
 }
 
+/**
+ * TextRenderObject class responsible for drawing a text
+ */
 class TextRenderObject extends RenderObject{
+    /**
+     * Default constructor of the TextRenderObject
+     * @param {String} font The font of the text
+     * @param {String} text The text to draw
+     * @param {Vector2} position The position of the text
+     * @param {String} color The color of the text (optional)
+     */
     constructor(font, text, position, color) {
         super(position, color);
         this.font = font;
         this.text = text;
     }
 
+    /**
+     * Draw the Text
+     * @param {CanvasRenderingContext2D} ctx Rendering Context
+     * @param {Renderer} rendererReference Reference to the Renderer Object
+     */
     draw(ctx, rendererReference) {
         ctx.font = this.font;
         ctx.fillStyle = this.color;
@@ -164,11 +233,22 @@ class TextRenderObject extends RenderObject{
 }
 
 class ArrowRenderObject extends RenderObject {
+    /**
+     * Default Constructor of the ArrowRenderObject
+     * @param {Vector2} startPosition the position of the bottom of the arrow
+     * @param {Vector2} endPosition the position of the top of the arrow
+     * @param {String} color The color of the arrow (optional)
+     */
     constructor(startPosition, endPosition, color) {
         super(startPosition, color);
         this.endPosition = endPosition;
     }
 
+    /**
+     * Draw the Arrow
+     * @param {CanvasRenderingContext2D} ctx Rendering Context
+     * @param {Renderer} rendererReference Reference to the Renderer Object
+     */
     draw(ctx, rendererReference) {
         let canvasStartPosition = rendererReference.worldToCanvasPosition(this.position);
         let canvasEndPosition = rendererReference.worldToCanvasPosition(this.endPosition);
@@ -199,11 +279,22 @@ class ArrowRenderObject extends RenderObject {
 }
 
 class CircleRenderObject extends RenderObject {
+    /**
+     * Default Constructor of the CircleRenderObject
+     * @param {Number} radius Radius of the circle
+     * @param {Vector2} position Position of the center of the circle
+     * @param {String} color Color of the circle (optional)
+     */
     constructor(radius, position, color) {
         super(position, color);
         this.radius = radius;
     }
 
+    /**
+     * Draw the circle
+     * @param {CanvasRenderingContext2D} ctx Rendering Context
+     * @param {Renderer} rendererReference Reference to the Renderer Object
+     */
     draw(ctx, rendererReference) {
         ctx.fillStyle = this.color;
 
@@ -216,6 +307,13 @@ class CircleRenderObject extends RenderObject {
 }
 
 class RectRenderObject extends RenderObject {
+    /**
+     * Default Constructor of the RectRenderObject
+     * @param {Vector2} position Position of the bottom left corner of the rectangle
+     * @param {Vector2} size Size of the rectangle
+     * @param {String} color Color of the rectangle (optional)
+     * @param {Boolean} filled Is the rectangle filled (optional)
+     */
     constructor(position, size, color, filled=true) {
         super(position, color);
         this.size = size;
@@ -223,6 +321,11 @@ class RectRenderObject extends RenderObject {
         this.filled = filled;
     }
 
+    /**
+     * Draw the rect
+     * @param {CanvasRenderingContext2D} ctx Rendering Context
+     * @param {Renderer} rendererReference Reference to the Renderer Object
+     */
     draw(ctx, rendererReference) {
         ctx.fillStyle = this.color;
 
@@ -239,12 +342,24 @@ class RectRenderObject extends RenderObject {
 }
 
 class LineRenderObject extends RenderObject {
+    /**
+     * Default constructor of the LineRenderObject
+     * @param {Vector2} startPosition Startposition of the line
+     * @param {Vector2} endPosition Endposition of the line
+     * @param {Number} lineWidth Width of the line
+     * @param {String} color Color of the line
+     */
     constructor(startPosition, endPosition, lineWidth, color) {
         super(startPosition, color);
         this.endPosition = endPosition;
         this.lineWidth = lineWidth;
     }
 
+    /**
+     * Draw the line
+     * @param {CanvasRenderingContext2D} ctx Rendering Context
+     * @param {Renderer} rendererReference Reference to the Renderer Object
+     */
     draw(ctx, rendererReference) {
         let canvasStartPosition = rendererReference.worldToCanvasPosition(this.position);
         let canvasEndPosition = rendererReference.worldToCanvasPosition(this.endPosition);
@@ -261,12 +376,25 @@ class LineRenderObject extends RenderObject {
     }
 }
 
+/**
+ * Vector2 Class (Represents coordinates in 2D Space)
+ */
 class Vector2 {
+    /**
+     * Default constructor of the Vector2
+     * @param {Number} x The X-Position
+     * @param {Number} y The Y-Position
+     */
     constructor(x, y) {
         this.x = x;
         this.y = y;
     }
     
+    /**
+     * Calculates the distance between this Vector2 and another
+     * @param {Vector2} toPosition The other Vector2 Object
+     * @returns The Distance
+     */
     distanceTo(toPosition) {
       let distancepart1 = Math.pow((toPosition.x - this.x), 2);
       let distancepart2 =  Math.pow((toPosition.y - this.y), 2);
