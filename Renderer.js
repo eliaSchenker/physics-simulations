@@ -9,6 +9,7 @@ class Renderer {
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");    
         this.toRenderObjects = [];
+        this.toRenderUI = [];
         
         //Camera Initialization
         this.cameraPosition = new Vector2(0, 0);
@@ -18,6 +19,7 @@ class Renderer {
         this.zoomAmount = 1;
         this.canDrag = true;
         this.prepareDragEvent();
+        this.prepareScrollEvent();
     }
 
     /**
@@ -81,14 +83,25 @@ class Renderer {
         this.toRenderObjects.push(new LineRenderObject(startPosition, endPosition, lineWidth, color));
     }
 
+    reset_render_ui_queue() {
+        this.toRenderUI = [];
+    }
+
+    render_ui_text() {
+        
+    }
+
     /**
      * Renders the frame
      */
     render_frame() {
         this.clear_frame();
+        //Draw the objects
         for(let i = 0;i<this.toRenderObjects.length;i++) {
             this.toRenderObjects[i].draw(this.ctx, this);
         }
+        //Draw the UI
+
     }
 
     /**
@@ -97,6 +110,32 @@ class Renderer {
     clear_frame() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
+
+    
+    /**
+     * Calculate the position on the canvas using basic linear conversion
+     * @param {Vector2} worldPosition  Position in the world
+     * @returns Position on the canvas
+     */
+     worldToCanvasPosition(worldPosition) {
+        //X Coordinate
+       let oldMinX = this.cameraPosition.x - (this.cameraXSize / 2 * this.zoomAmount);
+       let oldMaxX = this.cameraPosition.x + (this.cameraXSize / 2 * this.zoomAmount);
+       let newMinX = 0
+       let newMaxX = this.canvas.width;
+       let oldValueX = worldPosition.x;
+       //Y Coordinate
+       let oldMinY = this.cameraPosition.y - (this.cameraYSize / 2 * this.zoomAmount);
+       let oldMaxY = this.cameraPosition.y + (this.cameraYSize / 2 * this.zoomAmount);
+       let newMinY = this.canvas.height;
+       let newMaxY = 0;
+       let oldValueY = worldPosition.y;
+
+       let newX =  (((oldValueX - oldMinX) * (newMaxX - newMinX)) / (oldMaxX - oldMinX)) + newMinX;
+       let newY =  (((oldValueY - oldMinY) * (newMaxY - newMinY)) / (oldMaxY - oldMinY)) + newMinY;
+       return new Vector2(newX, newY)
+   }
+
 
     //Camera Operations
 
@@ -113,27 +152,27 @@ class Renderer {
     }
 
     /**
-     * Calculate the position on the canvas using basic linear conversion
-     * @param {Vector2} worldPosition  Position in the world
-     * @returns Position on the canvas
+     * Prepare the scroll event
      */
-     worldToCanvasPosition(worldPosition) {
-         //X Coordinate
-        let oldMinX = this.cameraPosition.x - (this.cameraXSize / 2 * this.zoomAmount);
-        let oldMaxX = this.cameraPosition.x + (this.cameraXSize / 2 * this.zoomAmount);
-        let newMinX = 0
-        let newMaxX = this.canvas.width;
-        let oldValueX = worldPosition.x;
-        //Y Coordinate
-        let oldMinY = this.cameraPosition.y - (this.cameraYSize / 2 * this.zoomAmount);
-        let oldMaxY = this.cameraPosition.y + (this.cameraYSize / 2 * this.zoomAmount);
-        let newMinY = this.canvas.height;
-        let newMaxY = 0;
-        let oldValueY = worldPosition.y;
+    prepareScrollEvent() {
+        this.canvas.addEventListener("wheel", this.onscrollwheel.bind(this));
+        console.log("registering scroll event")
+    }
 
-        let newX =  (((oldValueX - oldMinX) * (newMaxX - newMinX)) / (oldMaxX - oldMinX)) + newMinX;
-        let newY =  (((oldValueY - oldMinY) * (newMaxY - newMinY)) / (oldMaxY - oldMinY)) + newMinY;
-        return new Vector2(newX, newY)
+    /**
+     * Scroll wheel event
+     * @param {*} e Eventdata
+     */
+    onscrollwheel(e) {
+        e.preventDefault();
+        if(e.deltaY > 0) {
+            this.zoomAmount += 0.01;
+        }else if (e.deltaY < 0){
+            if(this.zoomAmount - 0.01 > 0) { //Todo add smaller zooming
+                this.zoomAmount -= 0.01;
+            }
+        }
+        this.render_frame();
     }
 
     /**
@@ -373,6 +412,27 @@ class LineRenderObject extends RenderObject {
         ctx.lineTo(canvasEndPosition.x, canvasEndPosition.y);
         ctx.stroke();
         ctx.lineWidth = originalLineWidth;
+    }
+}
+
+class UIElement {
+    constructor(isPositionRelative, position, anchor) {
+        this.calculateRelative = isPositionRelative;
+        this.position = position;
+        this.anchor = anchor;
+    }
+}
+
+class UIText extends UIElement{
+    constructor(isPositionRelative, position, anchor, text, font, fillBackground=false) {
+        super(isPositionRelative, position, anchor);
+        this.text = text;
+        this.font = font;
+        this.filLBackground = fillBackground;
+    }
+
+    drawUI() {
+
     }
 }
 
