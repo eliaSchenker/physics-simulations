@@ -12,9 +12,6 @@ class DateUtil {
         var minutes = Math.floor(seconds / 60) % 60;
         seconds -= minutes * 60;
 
-        // what's left is seconds
-        var secondsRemainder = seconds % 60;
-
         var daysText = "";
         if(days != 0) {
             if(days != 1) {
