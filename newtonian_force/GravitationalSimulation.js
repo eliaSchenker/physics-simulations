@@ -26,6 +26,11 @@ class GravitationalSimulation {
         //Setup timewarp
         this.timeWarp = 1;
 
+        //Use Average DeltaT for calculation (to avoid problems with lag)
+        this.simRuntimeRealtime = 0;
+        this.physicsCalculationCount = 0;
+        this.simRuntimeSimTime = 0;
+
         this.isDocumentHidden = false;
     }
 
@@ -76,7 +81,11 @@ class GravitationalSimulation {
         
         //Based on this, calculate the time difference between the next tick
         let deltaT = (currentTickStart.getTime() - this.lastTickEnd.getTime()) / 1000;
-        
+        this.simRuntimeRealtime += deltaT;
+        this.physicsCalculationCount++;
+        deltaT = this.simRuntimeRealtime / this.physicsCalculationCount; //Use average deltat as deltat
+        //console.log(    deltaT);
+
         for(var i = 0;i<this.physicalBodies.length;i++) {
             var finalAcceleration = new Vector2(0, 0);
 
@@ -97,7 +106,9 @@ class GravitationalSimulation {
             //Update the position of the body using deltaT (multiply deltaT by the timeWarp)
             this.physicalBodies[i].updatePosition(deltaT * this.timeWarp);
 
-            if(this.trailCounter == 10) {
+            this.totalTimeSeconds += deltaT * this.timeWarp;
+
+            if(this.trailCounter == 1) {
                 //If the trail point limit is exceeded, delete the first trail point 
                 if(this.physicalBodies[i].trailPoints.length == this.trailPointLimit) {
                     this.physicalBodies[i].trailPoints.shift();
@@ -105,7 +116,7 @@ class GravitationalSimulation {
                 this.physicalBodies[i].trailPoints.push(this.physicalBodies[i].position);
             }
         }
-        if(this.trailCounter == 10) {
+        if(this.trailCounter == 1) {
             this.trailCounter = 0;         
         }else {
             this.trailCounter+=1;
