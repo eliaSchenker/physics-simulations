@@ -174,6 +174,7 @@ class GravitationalSimulation {
                 }
             }
         }
+
         this.renderer.render_frame();
     }
 }

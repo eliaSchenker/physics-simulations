@@ -36,8 +36,8 @@ class Renderer {
      * @param {Vector2} position The position of the text
      * @param {String} color The color of the text (optional)
      */
-    render_text(font, text, position, color="#000000", isClickable=false, onClickEvent=undefined) {
-        this.toRenderObjects.push(new TextRenderObject(font, text, position, color, isClickable, onClickEvent));
+    render_text(font, text, position, color="#000000") {
+        this.toRenderObjects.push(new TextRenderObject(font, text, position, color));
     }
 
     /**
@@ -47,8 +47,8 @@ class Renderer {
      * @param {Vector2} finishPosition Finishposition
      * @param {String} color Color of the arrow (optional)
      */
-    render_arrow(thickness, startPosition, finishPosition, color="#000000", isClickable=false, onClickEvent=undefined) {
-        this.toRenderObjects.push(new ArrowRenderObject(thickness, startPosition, finishPosition, color, isClickable, onClickEvent));
+    render_arrow(thickness, startPosition, finishPosition, color="#000000") {
+        this.toRenderObjects.push(new ArrowRenderObject(thickness, startPosition, finishPosition, color));
     }
 
     /**
@@ -57,8 +57,8 @@ class Renderer {
      * @param {Vector2} position Position of the center of the circle
      * @param {String} color Color of the circle (optional)
      */
-    render_circle(radius, position, color="#000000", isClickable=false, onClickEvent=undefined) {
-        this.toRenderObjects.push(new CircleRenderObject(radius, position, color, isClickable, onClickEvent));
+    render_circle(radius, position, color="#000000") {
+        this.toRenderObjects.push(new CircleRenderObject(radius, position, color));
     }
 
     /**
@@ -68,8 +68,8 @@ class Renderer {
      * @param {String} color Color of the rectangle (optional)
      * @param {Boolean} filled Is the rectangle filled or not (optional)
      */
-    render_rect(position, size, color="#000000", filled=true, isClickable=false, onClickEvent=undefined) {
-        this.toRenderObjects.push(new RectRenderObject(position, size, color, filled, isClickable, onClickEvent));
+    render_rect(position, size, color="#000000", filled=true) {
+        this.toRenderObjects.push(new RectRenderObject(position, size, color, filled));
     }
 
     /**
@@ -79,8 +79,8 @@ class Renderer {
      * @param {Number} lineWidth Width of the line (optional)
      * @param {String} color Color of the line (optional)
      */
-    render_line(startPosition, endPosition, lineWidth = 1, color="#000000", isClickable=false, onClickEvent=undefined) {
-        this.toRenderObjects.push(new LineRenderObject(startPosition, endPosition, lineWidth, color, isClickable, onClickEvent));
+    render_line(startPosition, endPosition, lineWidth = 1, color="#000000") {
+        this.toRenderObjects.push(new LineRenderObject(startPosition, endPosition, lineWidth, color));
     }
 
     reset_render_ui_queue() {
@@ -148,8 +148,6 @@ class Renderer {
         this.canvas.addEventListener("mousemove", this.onmousemove.bind(this));
         this.canvas.addEventListener("mouseup", this.onmouseup.bind(this));
         this.canvas.addEventListener("mouseout", this.onmouseout.bind(this));
-        this.canvas.addEventListener("click", this.onclick.bind(this), false);
-        this.nothingClickEvent = undefined; //Event called when nothing is clicked
     }
 
     /**
@@ -157,7 +155,6 @@ class Renderer {
      */
     prepareScrollEvent() {
         this.canvas.addEventListener("wheel", this.onscrollwheel.bind(this));
-        console.log("registering scroll event")
     }
 
     /**
@@ -174,32 +171,6 @@ class Renderer {
             }
         }
         this.render_frame();
-    }
-
-    onclick(e) {
-        let rect = canvas.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
-        let clickedOnSomething = false;
-        for(var i = 0;i<this.toRenderObjects.length;i++) {
-            if(this.toRenderObjects[i].isClickable) {
-                var collision =  this.toRenderObjects[i].getCollision(this);
-                if(x > collision[0].x && y < collision[0].y &&
-                   x < collision[1].x && y > collision[1].y) {
-                       if(this.toRenderObjects[i].onClickEvent != undefined) {
-                        //Collision hit
-                        this.toRenderObjects[i].onClickEvent();
-                        clickedOnSomething = true;
-                        break;
-                       }
-                   }
-            }
-        }
-        if(!clickedOnSomething) {
-            if(this.anyClickEvent != undefined) {
-                this.anyClickEvent();
-            }
-        }
     }
 
     /**
@@ -261,11 +232,9 @@ class RenderObject {
      * @param {Vector2} position 
      * @param {String} color 
      */
-    constructor(position, color, isClickable, onClickEvent=undefined) {
+    constructor(position, color) {
         this.position = position;
         this.color = color;
-        this.isClickable = isClickable;
-        this.onClickEvent = onClickEvent;
     }    
 }
 
@@ -280,8 +249,8 @@ class TextRenderObject extends RenderObject{
      * @param {Vector2} position The position of the text
      * @param {String} color The color of the text (optional)
      */
-    constructor(font, text, position, color, isClickable=false, onClickEvent=undefined) {
-        super(position, color, isClickable, onClickEvent);
+    constructor(font, text, position, color) {
+        super(position, color);
         this.font = font;
         this.text = text;
     }
@@ -307,8 +276,8 @@ class ArrowRenderObject extends RenderObject {
      * @param {Vector2} endPosition the position of the top of the arrow
      * @param {String} color The color of the arrow (optional)
      */
-    constructor(startPosition, endPosition, color, isClickable=false, onClickEvent=undefined) {
-        super(startPosition, color, isClickable, onClickEvent);
+    constructor(startPosition, endPosition, color) {
+        super(startPosition, color);
         this.endPosition = endPosition;
     }
 
@@ -353,8 +322,8 @@ class CircleRenderObject extends RenderObject {
      * @param {Vector2} position Position of the center of the circle
      * @param {String} color Color of the circle (optional)
      */
-    constructor(radius, position, color, isClickable=false, onClickEvent=undefined) {
-        super(position, color, isClickable, onClickEvent);
+    constructor(radius, position, color) {
+        super(position, color);
         this.radius = radius;
         this.color = color;
     }
@@ -372,11 +341,6 @@ class CircleRenderObject extends RenderObject {
         ctx.arc(canvasPosition.x, canvasPosition.y, finishPosition.x - canvasPosition.x, 0, 2 * Math.PI);
         ctx.stroke();
     }
-
-    getCollision(rendererReference) {
-        return [rendererReference.worldToCanvasPosition(new Vector2(this.position.x - this.radius, this.position.y - this.radius)),
-            rendererReference.worldToCanvasPosition(new Vector2(this.position.x + this.radius, this.position.y + this.radius))];
-    }
 }
 
 class RectRenderObject extends RenderObject {
@@ -387,8 +351,8 @@ class RectRenderObject extends RenderObject {
      * @param {String} color Color of the rectangle (optional)
      * @param {Boolean} filled Is the rectangle filled (optional)
      */
-    constructor(position, size, color, filled=true, isClickable=false, onClickEvent=undefined) {
-        super(position, color, isClickable, onClickEvent);
+    constructor(position, size, color, filled=true) {
+        super(position, color);
         this.size = size;
         this.color = color;
         this.filled = filled;
@@ -422,8 +386,8 @@ class LineRenderObject extends RenderObject {
      * @param {Number} lineWidth Width of the line
      * @param {String} color Color of the line
      */
-    constructor(startPosition, endPosition, lineWidth, color, isClickable=false, onClickEvent) {
-        super(startPosition, color, isClickable, onClickEvent);
+    constructor(startPosition, endPosition, lineWidth, color) {
+        super(startPosition, color);
         this.endPosition = endPosition;
         this.lineWidth = lineWidth;
     }
