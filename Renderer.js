@@ -87,10 +87,6 @@ class Renderer {
         this.toRenderUI = [];
     }
 
-    render_ui_text() {
-        
-    }
-
     /**
      * Renders the frame
      */
@@ -101,6 +97,10 @@ class Renderer {
             this.toRenderObjects[i].draw(this.ctx, this);
         }
 
+        //Draw the UI
+        for(let i = 0;i<this.toRenderUI.length;i++) {
+            this.toRenderUI[i].draw(this.ctx, this);
+        }
     }
 
     /**
@@ -133,6 +133,32 @@ class Renderer {
        let newX =  (((oldValueX - oldMinX) * (newMaxX - newMinX)) / (oldMaxX - oldMinX)) + newMinX;
        let newY =  (((oldValueY - oldMinY) * (newMaxY - newMinY)) / (oldMaxY - oldMinY)) + newMinY;
        return new Vector2(newX, newY)
+   }
+
+   getUIPosition(isPositionRelative, position, xAnchor, yAnchor) {
+       if(isPositionRelative) {
+           position = new Vector2(this.canvas.width / 100 * position.x, this.canvas.height / 100 * position.y);
+       }
+
+       let x = 0;
+       let y = 0;
+       if(xAnchor == "left") {
+            x = position.x;
+       }else if(xAnchor == "middle") {
+            x = canvas.width / 2 + position.x;
+       }else if(xAnchor == "right") {
+            x = canvas.width - position.x;
+       }
+
+       if(yAnchor == "top") {
+            y = position.y;
+       }else if(yAnchor == "middle") {
+            y = canvas.height / 2 + position.y;
+       }else if(yAnchor == "bottom") {
+            y = canvas.height - position.y;
+       }
+
+       return new Vector2(x, y);
    }
 
 
@@ -182,6 +208,7 @@ class Renderer {
       this.originalCameraPosition = this.cameraPosition;
       this.originalX = e.pageX - this.canvas.offsetLeft;
       this.originalY = e.pageY - this.canvas.offsetTop;
+      this.checkUIClickEvents(this.originalX, this.originalY);
     }
 
     /**
@@ -203,7 +230,23 @@ class Renderer {
             this.originalCameraPosition.y - distance2 / this.canvas.height * this.cameraYSize * this.zoomAmount);
         this.render_frame();
       }
-    } 
+    }
+
+    checkUIClickEvents(mouseX, mouseY) {
+        for(var i = 0;i<this.toRenderUI.length;i++) {
+            if(this.toRenderUI[i] instanceof UIButton) {
+                let collider = this.toRenderUI[i].getCollisionRect(this.ctx, this);
+                if(mouseX > collider[0].x && mouseY > collider[0].y &&
+                    mouseX < collider[1].x && mouseY < collider[1].y) {
+                    if(this.toRenderUI[i].onClickEvent != undefined) {
+                        //Collision hit
+                        this.toRenderUI[i].onClickEvent();
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * On mouse up event
@@ -264,8 +307,10 @@ class TextRenderObject extends RenderObject{
         ctx.font = this.font;
         ctx.fillStyle = this.color;
         
+        ctx.beginPath();
         let canvasPosition = rendererReference.worldToCanvasPosition(this.position);
         ctx.fillText(this.text, canvasPosition.x, canvasPosition.y);
+        ctx.stroke();
     }
 }
 
@@ -414,23 +459,70 @@ class LineRenderObject extends RenderObject {
 }
 
 class UIElement {
-    constructor(isPositionRelative, position, anchor) {
+    constructor(isPositionRelative, position, xAnchor, yAnchor, color) {
         this.calculateRelative = isPositionRelative;
         this.position = position;
-        this.anchor = anchor;
+        this.xAnchor = xAnchor;
+        this.yAnchor = yAnchor;
+        this.color = color;
     }
 }
 
-class UIText extends UIElement{
-    constructor(isPositionRelative, position, anchor, text, font, fillBackground=false) {
-        super(isPositionRelative, position, anchor);
+class UIText extends UIElement {
+    constructor(isPositionRelative, position, text, font, xAnchor="left", yAnchor="bottom", textAlignment="left", color="#000000") {
+        super(isPositionRelative, position, xAnchor, yAnchor, color);
         this.text = text;
         this.font = font;
-        this.filLBackground = fillBackground;
+        this.textAlignment = textAlignment;
     }
 
-    drawUI() {
+    draw(ctx, rendererReference) {
+        ctx.textAlign = this.textAlignment;
+        ctx.font = this.font;
+        ctx.fillStyle = this.color;
+        
+        let canvasPosition = rendererReference.getUIPosition(this.isPositionRelative, this.position, this.xAnchor, this.yAnchor);
+        ctx.fillText(this.text, canvasPosition.x, canvasPosition.y);
+    }
+}
 
+class UIButton extends UIElement {
+    constructor(isPositionRelative, position, text, font, onClickEvent, xAnchor="left", yAnchor="bottom", textColor="#000000", color="#D3D3D3") {
+        super(isPositionRelative, position, xAnchor, yAnchor, color);
+        this.text = text;
+        this.onClickEvent = onClickEvent;
+        this.font = font;
+        this.textColor = textColor;
+    }
+
+    draw(ctx, rendererReference) {
+        ctx.textAlign = this.textAlignment;
+        ctx.font = this.font;
+        ctx.fillStyle = this.color;
+        ctx.textAlign = "left";
+        let measuredText = ctx.measureText(this.text);
+        var textWidth = measuredText.width;
+        var textHeight = parseInt(ctx.font.match(/\d+/), 10);
+
+        let canvasPosition = rendererReference.getUIPosition(this.isPositionRelative, this.position, this.xAnchor, this.yAnchor);
+
+        let rectWidth = textWidth + 20;
+        let rectHeight = textHeight + 10;
+        ctx.fillRect(canvasPosition.x, canvasPosition.y, rectWidth, rectHeight);
+        ctx.fillStyle = this.textColor;
+        ctx.fillText(this.text, canvasPosition.x + (rectWidth - textWidth) / 2,  canvasPosition.y + rectHeight - (rectHeight - textHeight) / 1.1);
+    }
+
+    getCollisionRect(ctx, rendererReference) {
+        let measuredText = ctx.measureText(this.text);
+        var textWidth = measuredText.width;
+        var textHeight = parseInt(ctx.font.match(/\d+/), 10);
+
+        let canvasPosition = rendererReference.getUIPosition(this.isPositionRelative, this.position, this.xAnchor, this.yAnchor);
+
+        let rectWidth = textWidth + 20;
+        let rectHeight = textHeight + 10;
+        return [canvasPosition, new Vector2(canvasPosition.x + rectWidth, canvasPosition.y + rectHeight)];
     }
 }
 
