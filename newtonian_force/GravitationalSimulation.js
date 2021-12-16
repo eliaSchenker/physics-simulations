@@ -32,6 +32,13 @@ class GravitationalSimulation {
         this.simRuntimeSimTime = 0;
 
         this.isDocumentHidden = false;
+
+        this.initUI();
+    }
+
+    initUI() {
+        this.renderer.toRenderUI.push(new UIText(true, new Vector2(10, 10), "", "20px Arial", "left", "bottom"));
+        this.renderer.toRenderUI.push(new UIButton(true, new Vector2(10, 10), "", "20px Arial", (function() {this.toggleSimPause(); }).bind(this), "left", "top"))
     }
 
     /**
@@ -106,8 +113,6 @@ class GravitationalSimulation {
             //Update the position of the body using deltaT (multiply deltaT by the timeWarp)
             this.physicalBodies[i].updatePosition(deltaT * this.timeWarp);
 
-            this.totalTimeSeconds += deltaT * this.timeWarp;
-
             if(this.trailCounter == 1) {
                 //If the trail point limit is exceeded, delete the first trail point 
                 if(this.physicalBodies[i].trailPoints.length == this.trailPointLimit) {
@@ -116,6 +121,7 @@ class GravitationalSimulation {
                 this.physicalBodies[i].trailPoints.push(this.physicalBodies[i].position);
             }
         }
+        this.simRuntimeSimTime += deltaT * this.timeWarp;
         if(this.trailCounter == 1) {
             this.trailCounter = 0;         
         }else {
@@ -175,7 +181,26 @@ class GravitationalSimulation {
             }
         }
 
+        this.renderer.toRenderUI[0].text = "Simulation has been running for " + DateUtil.secondsToText(Math.round(this.simRuntimeSimTime));
+        this.renderer.toRenderUI[1].text = this.paused ? "Play" : "Pause"
+
         this.renderer.render_frame();
+    }
+
+    toggleSimPause() {
+        if(this.paused) {
+            this.playSim();
+        }else {
+            this.pauseSim();
+        }
+    }
+
+    pauseSim() {
+        this.paused = true;
+    }
+
+    playSim() {
+        this.paused = false;
     }
 }
 
