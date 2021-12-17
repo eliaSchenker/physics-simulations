@@ -41,12 +41,6 @@ class Renderer {
         //Draw the objects
         for(let i = 0;i<this.toRenderObjects.length;i++) {
             this.toRenderObjects[i].draw(this.ctx, this);
-            if(!(this.toRenderObjects[i] instanceof LineRenderObject)) {
-                let collisions = this.toRenderObjects[i].getCollisionRect(this.ctx, this);
-                this.ctx.beginPath();
-                this.ctx.rect(collisions[0].x, collisions[0].y, collisions[1].x - collisions[0].x, collisions[1].y - collisions[0].y);
-                this.ctx.stroke();
-            }
         }
 
         //Draw the UI
