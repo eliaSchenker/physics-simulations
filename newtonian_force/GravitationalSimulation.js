@@ -170,19 +170,20 @@ class GravitationalSimulation {
         this.renderer.reset_render_objects();
         for(var i = 0;i<this.physicalBodies.length;i++) {
             //Render Objects
-            this.renderer.render_circle(this.physicalBodies[i].radius, this.physicalBodies[i].position);
-            this.renderer.render_text("15px Arial", this.physicalBodies[i].name, new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].radius * 1.2, this.physicalBodies[i].position.y));
+            let body = new CircleRenderObject(this.physicalBodies[i].radius, this.physicalBodies[i].position);
+            this.renderer.toRenderObjects.push(body);
+            this.renderer.toRenderObjects.push(new TextRenderObject("15px Arial", this.physicalBodies[i].name, new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].radius * 1.2, this.physicalBodies[i].position.y)));
 
             //Render Trails
             if(this.displayTrails) {
                 for(var j = 0; j<this.physicalBodies[i].trailPoints.length - 1;j++) {
-                    this.renderer.render_line(this.physicalBodies[i].trailPoints[j], this.physicalBodies[i].trailPoints[j + 1], 0.25);
+                    this.renderer.toRenderObjects.push(new LineRenderObject(this.physicalBodies[i].trailPoints[j], this.physicalBodies[i].trailPoints[j + 1], 0.25));
                 }
             }
         }
 
         this.renderer.toRenderUI[0].text = "Simulation has been running for " + DateUtil.secondsToText(Math.round(this.simRuntimeSimTime));
-        this.renderer.toRenderUI[1].text = this.paused ? "Play" : "Pause"
+        this.renderer.toRenderUI[1].text = this.paused ? "Play" : "Pause";
 
         this.renderer.render_frame();
     }
