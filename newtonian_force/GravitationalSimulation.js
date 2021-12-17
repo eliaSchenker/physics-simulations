@@ -39,6 +39,7 @@ class GravitationalSimulation {
     initUI() {
         this.renderer.toRenderUI.push(new UIText(true, new Vector2(10, 10), "", "20px Arial", "left", "bottom"));
         this.renderer.toRenderUI.push(new UIButton(true, new Vector2(10, 10), "", "20px Arial", (function() {this.toggleSimPause(); }).bind(this), "left", "top"))
+        this.renderer.toRenderUI.push(new UIButton(true, new Vector2(100, 10), "Edit", "20px Arial", (function() {this.toggleEditMode(); }).bind(this), "left", "top"))
     }
 
     /**
@@ -154,7 +155,7 @@ class GravitationalSimulation {
             body2.position.y - body1.position.y);
         
         //Calculate the magnitude of the force (Square root of the squared and added values)
-        var mag = Math.sqrt(dir.x*dir.x + dir.y*dir.y);
+        var mag = Math.sqrt(Math.pow(dir.x, 2) + Math.pow(dir.y, 2));
         var norm = new Vector2(dir.x / mag, dir.y / mag);
 
         //Calculate the acceleration of the body by using the formula A = F/M
@@ -173,6 +174,14 @@ class GravitationalSimulation {
             let body = new CircleRenderObject(this.physicalBodies[i].radius, this.physicalBodies[i].position);
             this.renderer.toRenderObjects.push(body);
             this.renderer.toRenderObjects.push(new TextRenderObject("15px Arial", this.physicalBodies[i].name, new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].radius * 1.2, this.physicalBodies[i].position.y)));
+
+            if(this.isEditModeActive) {
+                this.renderer.toRenderUI[2].color = "#3d87ff";
+                this.renderer.toRenderObjects.push(new ArrowRenderObject(this.physicalBodies[i].position, 
+                    new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].velocity.x * 30000, this.physicalBodies[i].position.y + this.physicalBodies[i].velocity.y * 30000)));
+            }else {
+                this.renderer.toRenderUI[2].color = "#D3D3D3";
+            }
 
             //Render Trails
             if(this.displayTrails) {
@@ -193,6 +202,14 @@ class GravitationalSimulation {
             this.playSim();
         }else {
             this.pauseSim();
+        }
+    }
+    
+    toggleEditMode() {
+        if(this.isEditModeActive) {
+            this.isEditModeActive = false;
+        }else {
+            this.isEditModeActive = true;
         }
     }
 
