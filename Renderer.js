@@ -28,60 +28,6 @@ class Renderer {
     reset_render_objects() {
         this.toRenderObjects = [];
     }
-    
-    /**
-     * Render a text
-     * @param {String} font The font of the text
-     * @param {String} text The text to draw
-     * @param {Vector2} position The position of the text
-     * @param {String} color The color of the text (optional)
-     */
-    render_text(font, text, position, color="#000000") {
-        this.toRenderObjects.push(new TextRenderObject(font, text, position, color));
-    }
-
-    /**
-     * Draw an arrow 
-     * @param {Number} thickness Thickness of the arrow lines
-     * @param {Vector2} startPosition Startposition
-     * @param {Vector2} finishPosition Finishposition
-     * @param {String} color Color of the arrow (optional)
-     */
-    render_arrow(thickness, startPosition, finishPosition, color="#000000") {
-        this.toRenderObjects.push(new ArrowRenderObject(thickness, startPosition, finishPosition, color));
-    }
-
-    /**
-     * Draw a circle
-     * @param {Number} radius Radius of the circle
-     * @param {Vector2} position Position of the center of the circle
-     * @param {String} color Color of the circle (optional)
-     */
-    render_circle(radius, position, color="#000000") {
-        this.toRenderObjects.push(new CircleRenderObject(radius, position, color));
-    }
-
-    /**
-     * Render a rectangle
-     * @param {Vector2} position Position of the bottom-left corner of the Rectangle 
-     * @param {Vector2} size Size of the rectangle (Width, Height)
-     * @param {String} color Color of the rectangle (optional)
-     * @param {Boolean} filled Is the rectangle filled or not (optional)
-     */
-    render_rect(position, size, color="#000000", filled=true) {
-        this.toRenderObjects.push(new RectRenderObject(position, size, color, filled));
-    }
-
-    /**
-     * Draw a line
-     * @param {Vector2} startPosition Start position of the line
-     * @param {Vector2} endPosition End position of the line
-     * @param {Number} lineWidth Width of the line (optional)
-     * @param {String} color Color of the line (optional)
-     */
-    render_line(startPosition, endPosition, lineWidth = 1, color="#000000") {
-        this.toRenderObjects.push(new LineRenderObject(startPosition, endPosition, lineWidth, color));
-    }
 
     reset_render_ui_queue() {
         this.toRenderUI = [];
@@ -209,6 +155,7 @@ class Renderer {
       this.originalX = e.pageX - this.canvas.offsetLeft;
       this.originalY = e.pageY - this.canvas.offsetTop;
       this.checkUIClickEvents(this.originalX, this.originalY);
+      this.checkObjectClickEvents(this.originalX, this.originalY);
     }
 
     /**
@@ -230,6 +177,20 @@ class Renderer {
             this.originalCameraPosition.y - distance2 / this.canvas.height * this.cameraYSize * this.zoomAmount);
         this.render_frame();
       }
+    }
+
+    checkObjectClickEvents(mouseX, mouseY) {
+        for (let i = 0; i < this.toRenderObjects.length; i++) {
+            if(this.toRenderObjects[i].onClickEvent != undefined) {
+                let collider = this.toRenderObjects[i].getCollisionRect(this.ctx, this);
+                if(mouseX > collider[0].x && mouseY < collider[0].y &&
+                    mouseX < collider[1].x && mouseY > collider[1].y) {
+                        this.toRenderObjects[i].onClickEvent();
+                        break;
+                }
+            }
+        }
+        
     }
 
     checkUIClickEvents(mouseX, mouseY) {
@@ -278,7 +239,11 @@ class RenderObject {
     constructor(position, color) {
         this.position = position;
         this.color = color;
-    }    
+    }
+
+    addInteractionEvents(onClickEvent) {
+        this.onClickEvent = onClickEvent;
+    }
 }
 
 /**
@@ -311,6 +276,15 @@ class TextRenderObject extends RenderObject{
         let canvasPosition = rendererReference.worldToCanvasPosition(this.position);
         ctx.fillText(this.text, canvasPosition.x, canvasPosition.y);
         ctx.stroke();
+    }
+
+    getCollisionRect(ctx, rendererReference) {
+        ctx.font = this.font;
+        ctx.fillStyle = this.color;
+        let textWidth = ctx.measureText(this.text);
+        let textHeight = parseInt(ctx.font.match(/\d+/), 10);
+        let canvasPosition = rendererReference.worldToCanvasPosition(this.position);
+        return [canvasPosition, new Vector2(canvasPosition.x + textWidth, canvasPosition.y + textHeight)];
     }
 }
 
@@ -386,6 +360,11 @@ class CircleRenderObject extends RenderObject {
         ctx.arc(canvasPosition.x, canvasPosition.y, finishPosition.x - canvasPosition.x, 0, 2 * Math.PI);
         ctx.stroke();
     }
+
+    getCollisionRect(ctx, rendererReference) {
+        return [rendererReference.worldToCanvasPosition(new Vector2(this.position.x - this.radius, this.position.y - this.radius)),
+            rendererReference.worldToCanvasPosition(new Vector2(this.position.x + this.radius, this.position.y + this.radius))];
+    }
 }
 
 class RectRenderObject extends RenderObject {
@@ -420,6 +399,12 @@ class RectRenderObject extends RenderObject {
             ctx.rect(canvasPosition.x, canvasPosition.y, targetPosition.x - canvasPosition.x, targetPosition.y - canvasPosition.y);
         }
         ctx.stroke();
+    }
+
+    getCollisionRect(ctx, rendererReference) {
+        let canvasPosition = rendererReference.worldToCanvasPosition(this.position);
+        let targetPosition = rendererReference.worldToCanvasPosition(new Vector2(this.position.x + this.size.x, this.position.y + this.size.y));
+        return [canvasPosition, targetPosition];
     }
 }
 
@@ -484,6 +469,18 @@ class UIText extends UIElement {
         let canvasPosition = rendererReference.getUIPosition(this.isPositionRelative, this.position, this.xAnchor, this.yAnchor);
         ctx.fillText(this.text, canvasPosition.x, canvasPosition.y);
     }
+
+    getCollisionRect(ctx, rendererReference) {
+        ctx.textAlign = this.textAlignment;
+        ctx.font = this.font;
+        ctx.fillStyle = this.color;
+        ctx.textAlign = "left";
+        let measuredText = ctx.measureText(this.text);
+        var textWidth = measuredText.width;
+        var textHeight = parseInt(ctx.font.match(/\d+/), 10);
+        let canvasPosition = rendererReference.getUIPosition(this.isPositionRelative, this.position, this.xAnchor, this.yAnchor);
+        return [new Vector2(canvasPosition.x, canvasPosition.y), new Vector2(canvasPosition.x + textWidth, canvasPosition.y + textHeight)];
+    }
 }
 
 class UIButton extends UIElement {
@@ -514,6 +511,10 @@ class UIButton extends UIElement {
     }
 
     getCollisionRect(ctx, rendererReference) {
+        ctx.textAlign = this.textAlignment;
+        ctx.font = this.font;
+        ctx.fillStyle = this.color;
+        ctx.textAlign = "left";
         let measuredText = ctx.measureText(this.text);
         var textWidth = measuredText.width;
         var textHeight = parseInt(ctx.font.match(/\d+/), 10);
