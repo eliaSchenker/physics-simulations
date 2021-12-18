@@ -306,7 +306,7 @@ class TextRenderObject extends RenderObject{
      * @param {Vector2} position The position of the text
      * @param {String} color The color of the text (optional)
      */
-    constructor(font, text, position, color) {
+    constructor(font, text, position, color="#000000") {
         super(position, color);
         this.font = font;
         this.text = text;
@@ -344,7 +344,7 @@ class ArrowRenderObject extends RenderObject {
      * @param {Vector2} endPosition the position of the top of the arrow
      * @param {String} color The color of the arrow (optional)
      */
-    constructor(startPosition, endPosition, color) {
+    constructor(startPosition, endPosition, color="#000000") {
         super(startPosition, color);
         this.endPosition = endPosition;
     }
@@ -395,7 +395,7 @@ class CircleRenderObject extends RenderObject {
      * @param {Vector2} position Position of the center of the circle
      * @param {String} color Color of the circle (optional)
      */
-    constructor(radius, position, color) {
+    constructor(radius, position, color="#000000") {
         super(position, color);
         this.radius = radius;
         this.color = color;
@@ -429,7 +429,7 @@ class RectRenderObject extends RenderObject {
      * @param {String} color Color of the rectangle (optional)
      * @param {Boolean} filled Is the rectangle filled (optional)
      */
-    constructor(position, size, color, filled=true) {
+    constructor(position, size, color="#000000", filled=true) {
         super(position, color);
         this.size = size;
         this.color = color;
@@ -471,7 +471,7 @@ class LineRenderObject extends RenderObject {
      * @param {Number} lineWidth Width of the line
      * @param {String} color Color of the line
      */
-    constructor(startPosition, endPosition, lineWidth, color) {
+    constructor(startPosition, endPosition, lineWidth, color="#000000") {
         super(startPosition, color);
         this.endPosition = endPosition;
         this.lineWidth = lineWidth;
