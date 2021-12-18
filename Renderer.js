@@ -442,6 +442,7 @@ class RectRenderObject extends RenderObject {
      * @param {Renderer} rendererReference Reference to the Renderer Object
      */
     draw(ctx, rendererReference) {
+        ctx.strokeStyle = this.color;
         ctx.fillStyle = this.color;
 
         let canvasPosition = rendererReference.worldToCanvasPosition(this.position);
@@ -485,7 +486,7 @@ class LineRenderObject extends RenderObject {
         let canvasStartPosition = rendererReference.worldToCanvasPosition(this.position);
         let canvasEndPosition = rendererReference.worldToCanvasPosition(this.endPosition);
 
-        ctx.fillStyle = this.color;
+        ctx.strokeStyle = this.color;
 
         ctx.beginPath();
         var originalLineWidth = ctx.lineWidth;
