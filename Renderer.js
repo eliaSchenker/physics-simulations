@@ -58,11 +58,11 @@ class Renderer {
 
     
     /**
-     * Calculate the position on the canvas using basic linear conversion
+     * Calculate where a worldPosition is on the canvas using linear conversion
      * @param {Vector2} worldPosition  Position in the world
      * @returns Position on the canvas
      */
-     worldToCanvasPosition(worldPosition) {
+    worldToCanvasPosition(worldPosition) {
         //X Coordinate
        let oldMinX = this.cameraPosition.x - (this.cameraXSize / 2 * this.zoomAmount);
        let oldMaxX = this.cameraPosition.x + (this.cameraXSize / 2 * this.zoomAmount);
@@ -79,6 +79,30 @@ class Renderer {
        let newX =  (((oldValueX - oldMinX) * (newMaxX - newMinX)) / (oldMaxX - oldMinX)) + newMinX;
        let newY =  (((oldValueY - oldMinY) * (newMaxY - newMinY)) / (oldMaxY - oldMinY)) + newMinY;
        return new Vector2(newX, newY)
+   }
+
+   /**
+    * Calculate where a canvasPosition is in the world using linear conversion
+    * @param {Vector2} canvasPosition The canvas position
+    * @returns Position in the world
+    */
+   canvasToWorldPosition(canvasPosition) {
+        //X Coordinate
+        let oldMinX = 0;
+        let oldMaxX = this.canvas.width;
+        let newMinX = this.cameraPosition.x - (this.cameraXSize / 2 * this.zoomAmount);
+        let newMaxX = this.cameraPosition.x + (this.cameraXSize / 2 * this.zoomAmount);
+        let oldValueX = canvasPosition.x;
+        //Y Coordinate
+        let oldMinY = this.canvas.height;
+        let oldMaxY = 0;
+        let newMinY = this.cameraPosition.y - (this.cameraYSize / 2 * this.zoomAmount);
+        let newMaxY = this.cameraPosition.y + (this.cameraYSize / 2 * this.zoomAmount);
+        let oldValueY = canvasPosition.y;
+
+        let newX =  (((oldValueX - oldMinX) * (newMaxX - newMinX)) / (oldMaxX - oldMinX)) + newMinX;
+        let newY =  (((oldValueY - oldMinY) * (newMaxY - newMinY)) / (oldMaxY - oldMinY)) + newMinY;
+        return new Vector2(newX, newY);
    }
 
    getUIPosition(isPositionRelative, position, xAnchor, yAnchor) {
@@ -155,7 +179,13 @@ class Renderer {
       this.originalX = e.pageX - this.canvas.offsetLeft;
       this.originalY = e.pageY - this.canvas.offsetTop;
       this.checkUIClickEvents(this.originalX, this.originalY);
-      this.checkObjectClickEvents(this.originalX, this.originalY);
+
+      //Get the object which is under the mouse and assign it to the currentDragObject
+      this.currentDragObject = this.getObjectsUnderMouse(this.originalX, this.originalY);
+      //If the currentDragObject exists and its onClickEvent is not undefined, call it
+      if(this.currentDragObject != undefined && this.currentDragObject.onClickEvent != undefined) {
+        this.currentDragObject.onClickEvent(this.canvasToWorldPosition(new Vector2(this.originalX, this.originalY)));
+      }
     }
 
     /**
@@ -172,21 +202,26 @@ class Renderer {
         var distance1 = this.originalX - x;
         var distance2 = this.originalY - y;
 
-        //Calculate the new camera position by adding the distance to the originalCameraPosition and accounting for the width of the canvas, the cameraXSize and the zoomAmount
-        this.cameraPosition = new Vector2(this.originalCameraPosition.x + distance1 / this.canvas.width * this.cameraXSize * this.zoomAmount, 
-            this.originalCameraPosition.y - distance2 / this.canvas.height * this.cameraYSize * this.zoomAmount);
-        this.render_frame();
+        //If the currentDragObject is either undefined or doesn't have a dragEvent, move the camera
+        if(this.currentDragObject == undefined || this.currentDragObject.onDragEvent == undefined) {
+            //Calculate the new camera position by adding the distance to the originalCameraPosition and accounting for the width of the canvas, the cameraXSize and the zoomAmount
+            this.cameraPosition = new Vector2(this.originalCameraPosition.x + distance1 / this.canvas.width * this.cameraXSize * this.zoomAmount, 
+                this.originalCameraPosition.y - distance2 / this.canvas.height * this.cameraYSize * this.zoomAmount);
+            this.render_frame();
+        }else {
+            //If it does exist and has a dragEvent, call the event
+            this.currentDragObject.onDragEvent(this.canvasToWorldPosition(new Vector2(x, y)));
+        }
       }
     }
 
-    checkObjectClickEvents(mouseX, mouseY) {
+    getObjectsUnderMouse(mouseX, mouseY) {
         for (let i = 0; i < this.toRenderObjects.length; i++) {
-            if(this.toRenderObjects[i].onClickEvent != undefined) {
+            if(this.toRenderObjects[i].onClickEvent != undefined || this.toRenderObjects[i].onDragEvent != undefined) {
                 let collider = this.toRenderObjects[i].getCollisionRect(this.ctx, this);
                 if(mouseX > collider[0].x && mouseY < collider[0].y &&
                     mouseX < collider[1].x && mouseY > collider[1].y) {
-                        this.toRenderObjects[i].onClickEvent();
-                        break;
+                        return this.toRenderObjects[i];
                 }
             }
         }
@@ -215,6 +250,15 @@ class Renderer {
      */
     onmouseup(e) {
       this.isDragging = false;
+
+      if(this.currentDragObject != undefined) {
+          if(this.currentDragObject.onMouseUpEvent != undefined) {
+              let x = e.pageX - this.canvas.offsetLeft;
+              let y = e.pageY - this.canvas.offsetTop;
+              this.currentDragObject.onMouseUpEvent(this.canvasToWorldPosition(new Vector2(x, y)));
+          }
+          this.currentDragObject = undefined;
+      }
     }
 
     /**
@@ -223,6 +267,9 @@ class Renderer {
      */
     onmouseout(e) {
       this.isDragging = false;
+      if(this.currentDragObject != undefined) {
+          this.currentDragObject = undefined;
+      }
     }
 
 }
@@ -241,8 +288,10 @@ class RenderObject {
         this.color = color;
     }
 
-    addInteractionEvents(onClickEvent) {
+    addInteractionEvents(onClickEvent=undefined, onDragEvent=undefined, onMouseUpEvent=undefined) {
         this.onClickEvent = onClickEvent;
+        this.onDragEvent = onDragEvent;
+        this.onMouseUpEvent = onMouseUpEvent;
     }
 }
 

@@ -164,6 +164,10 @@ class GravitationalSimulation {
         return acceleration;
     }
 
+    getPredictedPositions(deltaT, calcAmount) {
+
+    }
+
     /**
      * Renders the physicalBodies using the renderer
      */
@@ -172,21 +176,30 @@ class GravitationalSimulation {
         for(var i = 0;i<this.physicalBodies.length;i++) {
             //Render Objects
             let body = new CircleRenderObject(this.physicalBodies[i].radius, this.physicalBodies[i].position);
-            this.renderer.toRenderObjects.push(body);
-            this.renderer.toRenderObjects.push(new TextRenderObject("15px Arial", this.physicalBodies[i].name, new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].radius * 1.2, this.physicalBodies[i].position.y)));
+
+            
 
             if(this.isEditModeActive) {
                 this.renderer.toRenderUI[2].color = "#3d87ff";
-                this.renderer.toRenderObjects.push(new ArrowRenderObject(this.physicalBodies[i].position, 
-                    new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].velocity.x * 30000, this.physicalBodies[i].position.y + this.physicalBodies[i].velocity.y * 30000)));
+                let currentIndex = i;
+                body.addInteractionEvents(undefined, (function(position) { console.log("test");this.physicalBodies[currentIndex].position = position;}).bind(this));
+
+                let arrowObject = new ArrowRenderObject(this.physicalBodies[i].position, 
+                    new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].velocity.x * 30000, this.physicalBodies[i].position.y + this.physicalBodies[i].velocity.y * 30000));
+                this.renderer.toRenderObjects.push(arrowObject);
             }else {
                 this.renderer.toRenderUI[2].color = "#D3D3D3";
             }
 
-            //Render Trails
-            if(this.displayTrails) {
-                for(var j = 0; j<this.physicalBodies[i].trailPoints.length - 1;j++) {
-                    this.renderer.toRenderObjects.push(new LineRenderObject(this.physicalBodies[i].trailPoints[j], this.physicalBodies[i].trailPoints[j + 1], 0.25));
+            this.renderer.toRenderObjects.push(body);
+            this.renderer.toRenderObjects.push(new TextRenderObject("15px Arial", this.physicalBodies[i].name, new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].radius * 1.2, this.physicalBodies[i].position.y)));
+
+            if(!this.isEditModeActive) {
+                //Render Trails
+                if(this.displayTrails) {
+                    for(var j = 0; j<this.physicalBodies[i].trailPoints.length - 1;j++) {
+                        this.renderer.toRenderObjects.push(new LineRenderObject(this.physicalBodies[i].trailPoints[j], this.physicalBodies[i].trailPoints[j + 1], 0.25));
+                    }
                 }
             }
         }
@@ -198,7 +211,7 @@ class GravitationalSimulation {
     }
 
     toggleSimPause() {
-        if(this.paused) {
+        if(this.paused && !this.isEditModeActive) {
             this.playSim();
         }else {
             this.pauseSim();
@@ -208,8 +221,10 @@ class GravitationalSimulation {
     toggleEditMode() {
         if(this.isEditModeActive) {
             this.isEditModeActive = false;
+            this.playSim();
         }else {
             this.isEditModeActive = true;
+            this.pauseSim();
         }
     }
 
