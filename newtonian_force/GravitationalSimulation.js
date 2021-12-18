@@ -164,8 +164,42 @@ class GravitationalSimulation {
         return acceleration;
     }
 
-    getPredictedPositions(deltaT, calcAmount) {
+    /**
+     * Returns the predict positions of the bodies in the next (deltaT * calcAmount) seconds
+     * @param {Number} deltaT Passed time between calculations
+     * @param {Number} calcAmount How many calculations should be done
+     * @returns An array of arrays which contain every point for each physicalBody
+     */
+    getPredictedPositions(deltaT, calcAmount) { 
+        let result = [];
+        //Initialize the result array with an empty array for each physicalBody
+        for (let i = 0; i < this.physicalBodies.length; i++) {
+            result.push([]);
+        }
 
+        //Create a deep copy of the physicalBodies array
+        let tempBodies = ObjectUtil.clone(this.physicalBodies);
+
+        for(let i = 0; i<calcAmount;i++) {
+            for(let j = 0; j<tempBodies.length;j++) {
+                let finalAcceleration = new Vector2(0, 0);
+                for(let k = 0; k<tempBodies.length;k++) {
+                    if(j != k) {
+                        let force = this.calculateForce(tempBodies[j], tempBodies[k]);
+                        let acceleration = this.calculateAcceleration(tempBodies[j], tempBodies[k], force);
+                        finalAcceleration = new Vector2(finalAcceleration.x + acceleration.x, finalAcceleration.y + acceleration.y);
+                    }
+                }
+                //Update the velocity of the body using acceleration and deltaT (multiply deltaT by the timeWarp)
+                tempBodies[j].updateVelocity(finalAcceleration, deltaT);
+                //Update the position of the body using deltaT (multiply deltaT by the timeWarp)
+                tempBodies[j].updatePosition(deltaT);
+
+                //Add the position to the result array
+                result[j].push(tempBodies[j].position);
+            }
+        }
+        return result;
     }
 
     /**
@@ -182,7 +216,7 @@ class GravitationalSimulation {
             if(this.isEditModeActive) {
                 this.renderer.toRenderUI[2].color = "#3d87ff";
                 let currentIndex = i;
-                body.addInteractionEvents(undefined, (function(position) { console.log("test");this.physicalBodies[currentIndex].position = position;}).bind(this));
+                body.addInteractionEvents(undefined, (function(position) { this.physicalBodies[currentIndex].position = position;}).bind(this));
 
                 let arrowObject = new ArrowRenderObject(this.physicalBodies[i].position, 
                     new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].velocity.x * 30000, this.physicalBodies[i].position.y + this.physicalBodies[i].velocity.y * 30000));
@@ -194,12 +228,23 @@ class GravitationalSimulation {
             this.renderer.toRenderObjects.push(body);
             this.renderer.toRenderObjects.push(new TextRenderObject("15px Arial", this.physicalBodies[i].name, new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].radius * 1.2, this.physicalBodies[i].position.y)));
 
+            //If the edit mode is not active, render the past trails
             if(!this.isEditModeActive) {
                 //Render Trails
                 if(this.displayTrails) {
                     for(var j = 0; j<this.physicalBodies[i].trailPoints.length - 1;j++) {
                         this.renderer.toRenderObjects.push(new LineRenderObject(this.physicalBodies[i].trailPoints[j], this.physicalBodies[i].trailPoints[j + 1], 0.25));
                     }
+                }
+            }
+        }
+
+        //If edit mode is active render the predicted trails
+        if(this.isEditModeActive) {
+            let predicted = this.getPredictedPositions(10000, 1000);
+            for (let i = 0; i < predicted.length; i++) {
+                for(var j = 0; j<predicted[i].length - 1;j++) {
+                    this.renderer.toRenderObjects.push(new LineRenderObject(predicted[i][j], predicted[i][j + 1], 0.25, "#ba2318"));
                 }
             }
         }
