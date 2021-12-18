@@ -272,6 +272,20 @@ class Renderer {
       }
     }
 
+    /**
+     * Destroy the renderer
+     */
+    destroy() {
+        //Clear the renderObjectQueues
+        this.toRenderObjects = [];
+        this.toRenderUI = [];
+        //Replace the canvas to clear the listeners
+        var elem = this.canvas;
+        elem.replaceWith(elem.cloneNode(true));
+        //Delete the canvas and ctx references
+        this.canvas = undefined;
+        this.ctx = undefined;
+    }
 }
 
 /**

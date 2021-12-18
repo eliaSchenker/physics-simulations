@@ -39,6 +39,16 @@
 <script src="../pageloader.js" type="text/javascript"></script>
 <script>
     function resetSimulation() {
+        if(sim != undefined) {
+            sim.destroy();
+            sim = undefined;
+        }
+
+        if(renderer != undefined) {
+            renderer.destroy();
+            renderer = undefined;
+        }
+
         //Prepare Planets
         var star1 = new PhysicalBody(1.989e30, 4e8, new Vector2(-0.5e10, 0), new Vector2(0, -1.07e6 / 8), "Star 1", false);
         var star2 = new PhysicalBody(1.989e30, 4e8, new Vector2(1e10, 0), new Vector2(0, -1.19e6 / 8), "Star 2", false);

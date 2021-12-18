@@ -241,7 +241,7 @@ class GravitationalSimulation {
 
         //If edit mode is active render the predicted trails
         if(this.isEditModeActive) {
-            let predicted = this.getPredictedPositions(10000, 1000);
+            let predicted = this.getPredictedPositions(10000, 2000);
             for (let i = 0; i < predicted.length; i++) {
                 for(var j = 0; j<predicted[i].length - 1;j++) {
                     this.renderer.toRenderObjects.push(new LineRenderObject(predicted[i][j], predicted[i][j + 1], 0.25, "#ba2318"));

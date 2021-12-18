@@ -46,6 +46,12 @@
     function resetSimulation() {
         if(sim != undefined) {
             sim.destroy();
+            sim = undefined;
+        }
+
+        if(renderer != undefined) {
+            renderer.destroy();
+            renderer = undefined;
         }
         
         //Prepare Planets
