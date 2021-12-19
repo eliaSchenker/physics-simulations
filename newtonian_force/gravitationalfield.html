@@ -24,8 +24,26 @@
 </style>
 <body onload="resetSimulation();initPage();">
     <nav></nav>
+    <h1>Gravitational Field Visualization</h1>
+    <p>Tip: The bodies can be moved with your mouse.</p>
     <canvas width="750" height="750" id="canvas"></canvas>
     <div id="controlDiv">
+        <p>Amount of bodies:</p>
+        <select id="bodyAmount" onchange="resetSimulation();">
+            <option value=1>1 Body</option>
+            <option value=2 selected>2 Bodies</option>
+            <option value=3>3 Bodies</option>
+        </select>
+        <p>Body Masses:</p>
+        <p id="body1masscontainer">Body 1 Mass: <input type="range" min=7.34767309e20 max=1.4695346e+23 value=7.34767309e22 id="body1mass" onchange="updateBodyMasses();"></p>
+        <p id="body2masscontainer">Body 2 Mass: <input type="range" min=7.34767309e20 max=1.4695346e+23 value=7.34767309e22 id="body2mass" onchange="updateBodyMasses();"></p>
+        <p id="body3masscontainer">Body 3 Mass: <input type="range" min=7.34767309e20 max=1.4695346e+23 value=7.34767309e22 id="body3mass" onchange="updateBodyMasses();"></p>
+        <p>Amount of lines</p>
+        <input type="range" min=21 max=100 step=2 id="lineAmountInput" value=51 onchange="updateLineAmount();">
+        <p>Distance between arrows</p>
+        <input type="range" min=3500000 max=10000000 id="arrowDistanceInput" value=7000000 onchange="updateArrowDistance();">
+        <p>Arrow start distance</p>
+        <input type="range" min=68000000 max=150000000 id="arrowStartDistanceInput" value=100000000 onchange="updateArrowStartDistance();">
         <p style="margin-top:50px;"><a href="https://eliaschenker.com" target="_blank">© Elia Schenker 2021</a></p>
     </div>
 </body>
@@ -43,6 +61,7 @@
     function resetSimulation() {
         if(sim != undefined) {
             sim.destroy();
+            sim = undefined;
         }
 
         if(renderer != undefined) {
@@ -51,19 +70,81 @@
         }
         
         //Prepare Planets
-        var body1 = new PhysicalBody(7.34767309e22, 6371000, new Vector2(50000000, 0), new Vector2(0, 0), "Body 1");
-        var body2 = new PhysicalBody(7.34767309e22, 6371000, new Vector2(-50000000, 0), new Vector2(0, 0), "Body 2");
-        var body3 = new PhysicalBody(7.34767309e22, 6371000, new Vector2(0, 0), new Vector2(0, 0), "Body 3");
+        var body1 = new PhysicalBody(7.34767309e22, 6371000, new Vector2(-50000000, 0), new Vector2(0, 0), "Body 1");
+        var body2 = new PhysicalBody(7.34767309e22, 6371000, new Vector2(0, 0), new Vector2(0, 0), "Body 2");
+        var body3 = new PhysicalBody(7.34767309e22, 6371000, new Vector2(50000000, 0), new Vector2(0, 0), "Body 3");
         var canvas = document.getElementById("canvas");
         renderer = new Renderer(canvas, 80000000, 80000000);
 
         renderer.zoomAmount = 2;
         sim = new GravitationalFieldVisualizer(renderer);
 
-        sim.addBody(body1);
-        sim.addBody(body2);
-        sim.addBody(body3);
+        let bodyAmount = document.getElementById("bodyAmount").selectedIndex + 1;
+        if(bodyAmount == 1) {
+            sim.addBody(body2);
+        }else if(bodyAmount == 2) {
+            sim.addBody(body1);
+            sim.addBody(body3);
+        }else {
+            sim.addBody(body1);
+            sim.addBody(body2);
+            sim.addBody(body3);
+        }
 
+        updateLineAmount();
+        updateArrowDistance();
+        updateArrowStartDistance();
+        updateBodyMassSliderVisibility();
+        updateBodyMasses();
+    }
+
+    function updateBodyMassSliderVisibility() {
+        let bodyAmount = document.getElementById("bodyAmount").selectedIndex + 1;
+        document.getElementById("body1masscontainer").style.display = 'none';
+        document.getElementById("body2masscontainer").style.display = 'none';
+        document.getElementById("body3masscontainer").style.display = 'none';
+
+        if(bodyAmount == 1) {
+            document.getElementById("body1masscontainer").style.display = 'block';
+        }else if(bodyAmount == 2) {
+            document.getElementById("body1masscontainer").style.display = 'block';
+            document.getElementById("body2masscontainer").style.display = 'block';
+        }else {
+            document.getElementById("body1masscontainer").style.display = 'block';
+            document.getElementById("body2masscontainer").style.display = 'block';
+            document.getElementById("body3masscontainer").style.display = 'block';
+        }
+    }
+
+    function updateBodyMasses() {
+       let body1mass = document.getElementById("body1mass").value;
+       let body2mass = document.getElementById("body2mass").value;
+       let body3mass = document.getElementById("body3mass").value;
+
+       let bodyAmount = document.getElementById("bodyAmount").selectedIndex + 1;
+
+       if(bodyAmount == 1) {
+            sim.physicalBodies[0].mass = body1mass;
+       }else if(bodyAmount == 2) {
+            sim.physicalBodies[0].mass = body1mass;
+            sim.physicalBodies[1].mass = body2mass;
+       }else {
+            sim.physicalBodies[0].mass = body1mass;
+            sim.physicalBodies[1].mass = body2mass;
+            sim.physicalBodies[2].mass = body3mass;
+       }
+    }
+
+    function updateLineAmount() {
+        sim.lineAmount = document.getElementById("lineAmountInput").value;
+    }
+
+    function updateArrowDistance() {
+        sim.arrowDistance = document.getElementById("arrowDistanceInput").value;
+    }
+
+    function updateArrowStartDistance() {
+        sim.arrowStartDistance = document.getElementById("arrowStartDistanceInput").value;
     }
 </script>
 </html>

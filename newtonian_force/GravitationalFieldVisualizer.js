@@ -4,6 +4,9 @@ class GravitationalFieldVisualizer {
         this.renderer = renderer;
         this.physicalBodies = [];
         this.testBody = new PhysicalBody(1, 1000000, new Vector2(0, 0), new Vector2(0, 0), "");
+        this.lineAmount = 50;
+        this.arrowDistance = 7000000;
+        this.arrowStartDistance = 100000000;
     }
 
     /**
@@ -33,7 +36,7 @@ class GravitationalFieldVisualizer {
         return finalAcceleration;
     }
 
-    getFieldPoints(bodies, pointAmount, startDistance, iterationAmount=30) {
+    getFieldPoints(bodies, pointAmount, startDistance, arrowDistance) {
         let result = []; //Result array consisting of arrays of points
         let initialPoints = [];
         let averagePosX = 0;
@@ -55,7 +58,13 @@ class GravitationalFieldVisualizer {
             result.push([newPoint]);
         }
 
+        let safteyCounter = 0;
         while (true) {
+            safteyCounter+=1;
+            if(safteyCounter == 1000) {
+                break;
+            }
+
             let allUndefined = true;
             for (let i = 0; i < initialPoints.length; i++) {
                 if(initialPoints[i] != undefined) {
@@ -69,7 +78,7 @@ class GravitationalFieldVisualizer {
             for(let j = 0;j<initialPoints.length;j++) {
                 if(initialPoints[j] != undefined) {
                     let radianAngle = this.getAccelerationAtPoint(initialPoints[j]).getAngleRadians();
-                    let newPoint = initialPoints[j].moveAtAngle(radianAngle, 7000000);
+                    let newPoint = initialPoints[j].moveAtAngle(radianAngle, arrowDistance);
                     initialPoints[j] = newPoint;
                     for (let k = 0; k < bodies.length; k++) {
                         if(newPoint.distanceTo(bodies[k].position) < bodies[k].radius) {
@@ -95,7 +104,7 @@ class GravitationalFieldVisualizer {
             body.addInteractionEvents(undefined, (function(e) {this.physicalBodies[tempIndex].position = e}).bind(this));
             this.renderer.toRenderObjects.push(body);
         }
-        let fieldPoints = this.getFieldPoints(this.physicalBodies, 50, 100000000);
+        let fieldPoints = this.getFieldPoints(this.physicalBodies, this.lineAmount, this.arrowStartDistance, this.arrowDistance);
         for (let i = 0; i < fieldPoints.length; i++) {
             for (let j = 0; j < fieldPoints[i].length - 1; j++) {
                 this.renderer.toRenderObjects.push(new ArrowRenderObject(fieldPoints[i][j], fieldPoints[i][j + 1]));
