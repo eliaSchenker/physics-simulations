@@ -101,9 +101,9 @@ class GravitationalSimulation {
                 //Don't calculate the influence the body has on itself
                 if(i != j) {
                     //Calculate the force between the two bodies
-                    var force = this.calculateForce(this.physicalBodies[i], this.physicalBodies[j]);
+                    var force = GravitationalSimulation.calculateForce(this.physicalBodies[i], this.physicalBodies[j]);
                     //Calculate the acceleration using the force
-                    var newAcceleration = this.calculateAcceleration(this.physicalBodies[i], this.physicalBodies[j], force);
+                    var newAcceleration = GravitationalSimulation.calculateAcceleration(this.physicalBodies[i], this.physicalBodies[j], force);
                     //Add the new acceleration to the final acceleration
                     finalAcceleration = new Vector2(finalAcceleration.x + newAcceleration.x, finalAcceleration.y + newAcceleration.y);
                 }
@@ -137,9 +137,9 @@ class GravitationalSimulation {
      * @param {PhysicalBody} body2 The second body
      * @returns The force in newtons
      */
-    calculateForce(body1, body2) {
+    static calculateForce(body1, body2) {
         var distance = body1.position.distanceTo(body2.position);
-        return GravitationalSimulation.gravitationalConstant * body1.mass * body2.mass / Math.pow(distance, 2)
+        return GravitationalSimulation.gravitationalConstant * body1.mass * body2.mass / Math.pow(distance, 2);
     }
 
     /**
@@ -149,7 +149,7 @@ class GravitationalSimulation {
      * @param {Number} force The force in newtons
      * @returns Acceleration in (m/s)^2
      */
-    calculateAcceleration(body1, body2, force) {
+    static calculateAcceleration(body1, body2, force) {
         //Calculate the direction of the force
         var dir = new Vector2(body2.position.x - body1.position.x, 
             body2.position.y - body1.position.y);
@@ -185,8 +185,8 @@ class GravitationalSimulation {
                 let finalAcceleration = new Vector2(0, 0);
                 for(let k = 0; k<tempBodies.length;k++) {
                     if(j != k) {
-                        let force = this.calculateForce(tempBodies[j], tempBodies[k]);
-                        let acceleration = this.calculateAcceleration(tempBodies[j], tempBodies[k], force);
+                        let force = GravitationalSimulation.calculateForce(tempBodies[j], tempBodies[k]);
+                        let acceleration = GravitationalSimulation.calculateAcceleration(tempBodies[j], tempBodies[k], force);
                         finalAcceleration = new Vector2(finalAcceleration.x + acceleration.x, finalAcceleration.y + acceleration.y);
                     }
                 }
@@ -220,6 +220,10 @@ class GravitationalSimulation {
 
                 let arrowObject = new ArrowRenderObject(this.physicalBodies[i].position, 
                     new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].velocity.x * 30000, this.physicalBodies[i].position.y + this.physicalBodies[i].velocity.y * 30000));
+                arrowObject.addInteractionEvents(undefined, (function(position) {
+                    this.physicalBodies[currentIndex].velocity = new Vector2((position.x - this.physicalBodies[currentIndex].position.x) / 30000,
+                                                                   (position.y - this.physicalBodies[currentIndex].position.y) / 30000);
+                }).bind(this));
                 this.renderer.toRenderObjects.push(arrowObject);
             }else {
                 this.renderer.toRenderUI[2].color = "#D3D3D3";
