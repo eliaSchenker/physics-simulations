@@ -40,8 +40,6 @@
         <p id="body3masscontainer">Body 3 Mass: <input type="range" min=7.34767309e20 max=1.4695346e+23 value=7.34767309e22 id="body3mass" onchange="updateBodyMasses();"></p>
         <p>Amount of lines</p>
         <input type="range" min=21 max=100 step=2 id="lineAmountInput" value=51 onchange="updateLineAmount();">
-        <p>Distance between arrows</p>
-        <input type="range" min=3500000 max=10000000 id="arrowDistanceInput" value=7000000 onchange="updateArrowDistance();">
         <p>Arrow start distance</p>
         <input type="range" min=68000000 max=150000000 id="arrowStartDistanceInput" value=100000000 onchange="updateArrowStartDistance();">
         <p style="margin-top:50px;"><a href="https://eliaschenker.com" target="_blank">© Elia Schenker 2021</a></p>
@@ -92,7 +90,6 @@
         }
 
         updateLineAmount();
-        updateArrowDistance();
         updateArrowStartDistance();
         updateBodyMassSliderVisibility();
         updateBodyMasses();
@@ -137,10 +134,6 @@
 
     function updateLineAmount() {
         sim.lineAmount = document.getElementById("lineAmountInput").value;
-    }
-
-    function updateArrowDistance() {
-        sim.arrowDistance = document.getElementById("arrowDistanceInput").value;
     }
 
     function updateArrowStartDistance() {
