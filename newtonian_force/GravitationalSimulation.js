@@ -92,8 +92,8 @@ class GravitationalSimulation {
         this.simRuntimeRealtime += deltaT;
         this.physicsCalculationCount++;
         deltaT = this.simRuntimeRealtime / this.physicsCalculationCount; //Use average deltat as deltat
-        //console.log(    deltaT);
 
+        //89 8324
         for(var i = 0;i<this.physicalBodies.length;i++) {
             var finalAcceleration = new Vector2(0, 0);
 
