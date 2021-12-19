@@ -620,4 +620,38 @@ class Vector2 {
       let distancepart2 =  Math.pow((toPosition.y - this.y), 2);
       return Math.sqrt(distancepart1 + distancepart2);
     }
+
+    /**
+     * Returns the angle of the vector in radians
+     * @returns Angle in radians
+     */
+    getAngleRadians() {
+        return Math.atan2(this.y, this.x);
+    }
+
+    /**
+     * Returns the angle of the vector in degrees
+     * @returns Angle in degrees
+     */
+    getAngleDegrees() {
+        return this.getAngleRadians() * (180/Math.PI);
+    }
+
+    /**
+     * Returns the magnitude of the vector
+     * @returns Magnitude
+     */
+    getMagnitude() {
+        return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+    }
+
+    /**
+     * Moves the point in direction of an angle with a distance
+     * @param {Number} angle The angle in radians
+     * @param {Number} distance The distance
+     * @returns the new point
+     */
+    moveAtAngle(angle, distance) {
+        return new Vector2(this.x + (distance * Math.cos(angle)), this.y + (distance * Math.sin(angle)));
+    }
 }
