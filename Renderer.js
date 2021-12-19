@@ -18,6 +18,7 @@ class Renderer {
         this.isDragging = true;
         this.zoomAmount = 1;
         this.canDrag = true;
+        this.lastFrameDraw = new Date();
         this.prepareDragEvent();
         this.prepareScrollEvent();
     }
@@ -37,6 +38,10 @@ class Renderer {
      * Renders the frame
      */
     render_frame() {
+        //Prevent the next frame from being drawn if 25 milliseconds haven't passed since the last frame drawn
+        if(new Date() - this.lastFrameDraw < 25) {
+            return;
+        }
         this.clear_frame();
         //Draw the objects
         for(let i = 0;i<this.toRenderObjects.length;i++) {
@@ -47,6 +52,8 @@ class Renderer {
         for(let i = 0;i<this.toRenderUI.length;i++) {
             this.toRenderUI[i].draw(this.ctx, this);
         }
+
+        this.lastFrameDraw = new Date();
     }
 
     /**
@@ -372,7 +379,7 @@ class ArrowRenderObject extends RenderObject {
         let canvasStartPosition = rendererReference.worldToCanvasPosition(this.position);
         let canvasEndPosition = rendererReference.worldToCanvasPosition(this.endPosition);
 
-        ctx.fillStyle = this.color;
+        ctx.strokeStyle = this.color;
 
         //Draws an Arrow. Code from https://riptutorial.com/html5-canvas/example/18136/line-with-arrowheads
         var aWidth = 5;
@@ -622,6 +629,15 @@ class Vector2 {
     }
 
     /**
+     * Calculates the angle to another position
+     * @param {Vector2} toPosition 
+     * @returns The angle in radians
+     */
+    angleTo(toPosition) {
+        return Math.atan2(toPosition.y - this.y, toPosition.x - this.x);
+    }
+
+    /**
      * Returns the angle of the vector in radians
      * @returns Angle in radians
      */
@@ -654,4 +670,5 @@ class Vector2 {
     moveAtAngle(angle, distance) {
         return new Vector2(this.x + (distance * Math.cos(angle)), this.y + (distance * Math.sin(angle)));
     }
+
 }
