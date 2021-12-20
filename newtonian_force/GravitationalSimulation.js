@@ -218,12 +218,53 @@ class GravitationalSimulation {
                 let currentIndex = i;
                 body.addInteractionEvents(undefined, (function(position) { this.physicalBodies[currentIndex].position = position;}).bind(this));
 
-                let arrowObject = new ArrowRenderObject(this.physicalBodies[i].position, 
-                    new Vector2(this.physicalBodies[i].position.x + this.physicalBodies[i].velocity.x * 30000, this.physicalBodies[i].position.y + this.physicalBodies[i].velocity.y * 30000));
-                arrowObject.addInteractionEvents(undefined, (function(position) {
-                    this.physicalBodies[currentIndex].velocity = new Vector2((position.x - this.physicalBodies[currentIndex].position.x) / 30000,
-                                                                   (position.y - this.physicalBodies[currentIndex].position.y) / 30000);
-                }).bind(this));
+                if(!this.physicalBodies[i].isDraggingArrow || this.physicalBodies[i].isDraggingArrow == undefined) {
+                    //Prepare velocity arrow
+                    //Get angle of the velocity
+                    let velocityAngle = this.physicalBodies[i].velocity.getAngleRadians();
+                    //Calculate the distance of the arrow (always a tenth of the width of the canvas to avoid too small or too big arrows when dealing with different simulations)
+                    let distance = this.renderer.canvasToWorldPosition(new Vector2(this.renderer.canvas.width / 20, 0)).x - this.renderer.canvasToWorldPosition(new Vector2(0, 0)).x;
+                    //Initialize the arrow position by moving by a distance at the velocityangle
+                    let arrowPosition = this.physicalBodies[i].position.moveAtAngle(velocityAngle, distance);
+        
+                    //Set the initialArrowPosition of the object
+                    this.physicalBodies[i].initialVelocityArrowPosition = arrowPosition;
+                    //Set the current arrow position of the object
+                    this.physicalBodies[i].arrowPosition = arrowPosition;
+                    //Initialize the start position of the arrow but relative to the position of the object
+                    this.physicalBodies[i].relativeVelocityArrowInitialPosition = new Vector2(arrowPosition.x - this.physicalBodies[i].position.x, arrowPosition.y - this.physicalBodies[i].position.y);
+                }
+                //Create the arrow object
+                let arrowObject = new ArrowRenderObject(this.physicalBodies[i].position, this.physicalBodies[i].arrowPosition ,"#BA2318");
+
+                //Add a drag and a onMouseUp event to the arrow object
+                arrowObject.addInteractionEvents(undefined,
+                    (function(e) {
+                        //If the dragging arrow variable isn't true, set it to true
+                        if(!this.physicalBodies[currentIndex].isDraggingArrow || this.physicalBodies[currentIndex].isDraggingArrow == undefined) {
+                            this.physicalBodies[currentIndex].isDraggingArrow = true;
+                            //Set the initialdragvelocity (the velocity when starting to drag) to the current velocity
+                            this.physicalBodies[currentIndex].initialDragVelocity = this.physicalBodies[currentIndex].velocity;
+                        }
+                        this.physicalBodies[currentIndex].arrowPosition = e; //Update the arrow position to the current mouse position
+                        //Calculate the relative position between the arrow position and the body position
+                        let relativeCurrentArrowPosition = new Vector2(this.physicalBodies[currentIndex].arrowPosition.x - this.physicalBodies[currentIndex].position.x,
+                                                                this.physicalBodies[currentIndex].arrowPosition.y - this.physicalBodies[currentIndex].position.y);
+                        //Calculate how much the x of the relative arrow position has changed by comparing it to the relative arrow initial position
+                        let xMultiplier = relativeCurrentArrowPosition.x / this.physicalBodies[currentIndex].relativeVelocityArrowInitialPosition.x;
+                        //Calculate how much the y of the relative arrow position has changed by comparing it to the relative arrow initial position
+                        let yMultiplier = relativeCurrentArrowPosition.y / this.physicalBodies[currentIndex].relativeVelocityArrowInitialPosition.y;
+                        //Update the velocity by multiplying the initial velocity with the multiplier
+                        this.physicalBodies[currentIndex].velocity = new Vector2(this.physicalBodies[currentIndex].initialDragVelocity.x * xMultiplier, 
+                                                                                 this.physicalBodies[currentIndex].initialDragVelocity.y * yMultiplier);
+                    }).bind(this),
+                    (function() {
+                        //When mouse is up and the isDraggingarrow variable is true, set it to false
+                        if(this.physicalBodies[currentIndex].isDraggingArrow == true) {
+                            this.physicalBodies[currentIndex].isDraggingArrow = false;
+                        }
+                    }).bind(this));
+
                 this.renderer.toRenderObjects.push(arrowObject);
             }else {
                 this.renderer.toRenderUI[2].color = "#D3D3D3";
@@ -248,7 +289,7 @@ class GravitationalSimulation {
             let predicted = this.getPredictedPositions(10000, 2000);
             for (let i = 0; i < predicted.length; i++) {
                 for(var j = 0; j<predicted[i].length - 1;j++) {
-                    this.renderer.toRenderObjects.push(new LineRenderObject(predicted[i][j], predicted[i][j + 1], 0.25, "#ba2318"));
+                    this.renderer.toRenderObjects.push(new LineRenderObject(predicted[i][j], predicted[i][j + 1], 0.25, "#BA2318"));
                 }
             }
         }
