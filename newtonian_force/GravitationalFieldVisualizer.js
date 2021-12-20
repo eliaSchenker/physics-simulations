@@ -36,8 +36,6 @@ class GravitationalFieldVisualizer {
     }
 
     getFieldPoints(bodies, pointAmount, startDistance, arrowDistance) {
-
-
         let result = []; //Result array consisting of arrays of points
         let initialPoints = [];
         let averagePosX = 0;

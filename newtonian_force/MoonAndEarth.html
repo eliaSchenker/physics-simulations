@@ -7,23 +7,10 @@
     <link href="../styles.css" rel="stylesheet">
     <title>Moon and Earth Simulation</title>
 </head>
-<style>
-    canvas {
-        border: 2px solid black;
-        float: left;
-    }
-
-    #controlDiv {
-        float: left;
-        margin-left:10px;
-    }
-
-    .mathdiv {
-        font-size:150%;
-    }
-</style>
 <body onload="resetSimulation();initPage();">
     <nav></nav>
+    <h1>Moon and Earth Simulation</h1>
+    <p>Tip: You can edit planets (change their position and velocity) in Edit Mode</p>
     <canvas width="750" height="750" id="canvas"></canvas>
     <div id="controlDiv">
     <p id="timeWarpText">Speed of time (1 second is 1 second):</p>

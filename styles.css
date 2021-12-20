@@ -68,3 +68,17 @@ body {
   .dropdown:hover .dropdown-content {
     display: block;
   }
+
+  canvas {
+    border: 2px solid black;
+    float: left;
+  }
+
+  #controlDiv {
+      float: left;
+      margin-left:10px;
+  }
+
+  .mathdiv {
+      font-size:150%;
+  }
