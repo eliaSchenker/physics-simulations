@@ -43,6 +43,7 @@ class Renderer {
             return;
         }
         this.clear_frame();
+        
         //Draw the objects
         for(let i = 0;i<this.toRenderObjects.length;i++) {
             this.toRenderObjects[i].draw(this.ctx, this);
@@ -405,7 +406,7 @@ class ArrowRenderObject extends RenderObject {
 
     getCollisionRect(ctx, rendererReference) {
         let canvasEndPosition = rendererReference.worldToCanvasPosition(this.endPosition);
-        return [new Vector2(canvasEndPosition.x - 5, canvasEndPosition.y + 10), new Vector2(canvasEndPosition.x + 5, canvasEndPosition.y - 5)];
+        return [new Vector2(canvasEndPosition.x - 10, canvasEndPosition.y + 15), new Vector2(canvasEndPosition.x + 10,  canvasEndPosition.y - 10)];
     }
 }
 
