@@ -10,10 +10,10 @@
 <body onload="resetSimulation();initPage();">
     <nav></nav>
     <h1>Gravitational Field Visualization</h1>
-    <p>Tip: The bodies and the camera can be moved with your mouse.</p>
+    <p>Hint: The bodies and the camera can be moved with your mouse.</p>
     <canvas width="750" height="750" id="canvas"></canvas>
     <div id="controlDiv">
-        <b>Möglichkeit von Schhwerkraft auf eine Testmasse:</b>
+        <b>Gravitational potential of a testbody with a mass:</b>
         <div class="mathdiv">
             <math>
                 <mover>
@@ -63,7 +63,7 @@
         <p id="body3masscontainer">Body 3 Mass: <input type="range" min=7.34767309e20 max=1.4695346e+23 value=7.34767309e22 id="body3mass" onchange="updateBodyMasses();"></p>
         <p>Amount of lines</p>
         <input type="range" min=21 max=100 step=2 id="lineAmountInput" value=51 onchange="updateLineAmount();">
-        <p>Arrow start distance</p>
+        <p>Field render distance</p>
         <input type="range" min=68000000 max=150000000 id="arrowStartDistanceInput" value=100000000 onchange="updateArrowStartDistance();">
         <p style="margin-top:50px;"><a href="https://eliaschenker.com" target="_blank">© Elia Schenker 2021</a></p>
     </div>

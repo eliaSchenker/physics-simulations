@@ -10,9 +10,10 @@
 <body onload="resetSimulation();initPage();">
     <nav></nav>
     <h1>Moon and Earth Simulation</h1>
-    <p>Tip: You can edit planets (change their position and velocity) in Edit Mode</p>
+    <p>Hint: You can edit bodies (change their position and velocity) in Edit Mode</p>
     <canvas width="750" height="750" id="canvas"></canvas>
     <div id="controlDiv">
+    <button onclick="resetSimulation();">Reset simulation</button>
     <p id="timeWarpText">Speed of time (1 second is 1 second):</p>
     <input type="range" min=1 max=2400000 onchange="timeWarpSliderChange();" value=1 id="timeWarpSlider">
     <p id="radiusText">Radius r (384400 km):</p>

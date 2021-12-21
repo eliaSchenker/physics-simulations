@@ -3,7 +3,6 @@ class GravitationalFieldVisualizer {
         this.interval = setInterval(this.tick.bind(this), 0.01);
         this.renderer = renderer;
         this.physicalBodies = [];
-        this.testBody = new PhysicalBody(1, 1000000, new Vector2(0, 0), new Vector2(0, 0), "");
         this.lineAmount = 50;
         this.arrowStartDistance = 100000000;
     }
@@ -25,12 +24,10 @@ class GravitationalFieldVisualizer {
     getAccelerationAtPoint(point) {
         let tempBody = new PhysicalBody(1, 0, point, new Vector2(0 ,0), "");
         let finalAcceleration = new Vector2(0, 0);
-        var count = 0;
         for (let i = 0; i < this.physicalBodies.length; i++) {
             let force = GravitationalSimulation.calculateForce(tempBody, this.physicalBodies[i]);
             let acceleration = GravitationalSimulation.calculateAcceleration(tempBody, this.physicalBodies[i], force);
             finalAcceleration = new Vector2(finalAcceleration.x + acceleration.x, finalAcceleration.y + acceleration.y);
-            count +=1;
         }
         return finalAcceleration;
     }
@@ -113,7 +110,7 @@ class GravitationalFieldVisualizer {
             body.addInteractionEvents(undefined, (function(e) {this.physicalBodies[tempIndex].position = e}).bind(this));
             this.renderer.toRenderObjects.push(body);
         }
-        
+
         let fieldPoints = this.getFieldPoints(this.physicalBodies, this.lineAmount, this.arrowStartDistance, 1000000);
         
         for (let i = 0; i < fieldPoints.length; i++) {
