@@ -328,9 +328,10 @@ class TextRenderObject extends RenderObject{
      * @param {Vector2} position The position of the text
      * @param {String} color The color of the text (optional)
      */
-    constructor(font, text, position, color="#000000") {
+    constructor(font, text, position, textAlignment="left", color="#000000") {
         super(position, color);
         this.font = font;
+        this.textAlignment = textAlignment;
         this.text = text;
     }
 
@@ -342,6 +343,7 @@ class TextRenderObject extends RenderObject{
     draw(ctx, rendererReference) {
         ctx.font = this.font;
         ctx.fillStyle = this.color;
+        ctx.textAlign = this.textAlignment
         
         ctx.beginPath();
         let canvasPosition = rendererReference.worldToCanvasPosition(this.position);
