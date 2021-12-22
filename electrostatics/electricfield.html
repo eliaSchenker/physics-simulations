@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="../styles.css" rel="stylesheet">
+    <title>Electric Field Visualization</title>
+</head>
+<body onload="resetSimulation();initPage();">
+    <nav></nav>
+    <h1>Electric Field Visualization</h1>
+    <p>Hint: You can move the test charge (red) with your mouse</p>
+    <canvas width="750" height="750" id="canvas"></canvas>
+    <div id="controlDiv">
+        <h3>Gravitational potential of a testbody with a charge:</h3>
+        <div class="mathdiv">
+            <math>
+                <msub>
+                    <mi>F</mi>
+                    <mi>El</mi>
+                </msub>
+                <mo>=</mo>
+                <msub>
+                    <mi>k</mi>
+                    <mi>e</mi>
+                </msub>
+                <mfrac>
+                    <mi>
+                        <msub>
+                            <mi>q</mi>
+                            <mi>1</mi>
+                        </msub>
+                        *
+                        <msub>
+                            <mi>q</mi>
+                            <mi>2</mi>
+                        </msub>
+                    </mi>
+                    <msup>
+                        <mi>r</mi>
+                        <mn>2</mn>
+                    </msup>
+                </mfrac>
+            </math>
+        </div>
+        <div class="mathdiv">
+            <math>
+                <mover>
+                    <mi>E</mi>
+                    <mo>&rarr;</mo>
+                </mover>
+                <mo>=</mo>
+                <mfrac>
+                    <mover>
+                        <msub>
+                            <mi>F</mi>
+                            <mi>El</mi>
+                        </msub>
+                        <mo>&rarr;</mo>
+                    </mover>
+                    <mi>q</mi>
+                </mfrac>
+            </math>
+        </div><br>
+        <div class="mathdiv">
+            <math>
+                <mi>[E]</mi>
+                <mo>=</mo>
+                <mfrac>
+                    <mi>N</mi>
+                    <mi>C</mi>
+                </mfrac>
+            </math>
+        </div>
+        <h3>Options:</h3>
+        <select id="particleAmount" onchange="resetSimulation();">
+            <option value=1>1 Particle</option>
+            <option value=2 selected>2 Particles</option>
+            <option value=3>3 Particles</option>
+        </select>
+        <p>Particle Charges:</p>
+        <div id="particleChargeContainer1">
+            <b>Particle 1:</b><br>
+            <input type="checkbox" id="particle1positivecharge" checked onchange="updateParticleCharges();">
+            <label for="particle1positivecharge">Is charge positive?</label><br>
+            <input type="range" id="particle1chargefactor" min=0.5 max=2 value=1 step=0.01 onchange="updateParticleCharges();">
+        </div>
+        <div id="particleChargeContainer2">
+            <b>Particle 2:</b><br>
+            <input type="checkbox" id="particle2positivecharge" onchange="updateParticleCharges();">
+            <label for="particle2positivecharge">Is charge positive?</label><br>
+            <input type="range" id="particle2chargefactor" min=0.5 max=2 value=1 step=0.01 onchange="updateParticleCharges();">
+        </div>
+        <div id="particleChargeContainer3">
+            <b>Particle 3:</b><br>
+            <input type="checkbox" id="particle3positivecharge" checked onchange="updateParticleCharges();">
+            <label for="particle3positivecharge">Is charge positive?</label><br>
+            <input type="range" id="particle3chargefactor" min=0.5 max=2 value=1 step=0.01 onchange="updateParticleCharges();">
+        </div>
+
+        <p style="margin-top:50px;"><a href="https://eliaschenker.com" target="_blank">© Elia Schenker 2021</a></p>
+    </div>
+</body>
+<script src="ElectricFieldVisualizer.js" type="text/javascript"></script>
+<script src="../Renderer.js" type="text/javascript"></script>
+<script src="../util/DateUtil.js" type="text/javascript"></script>
+<script src="../util/SIUtil.js" type="text/javascript"></script>
+<script src="../util/ObjectUtil.js" type="text/javascript"></script>
+<script src="../pageloader.js" type="text/javascript"></script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script>
+    var sim;
+    var renderer;
+    
+    function resetSimulation() {
+        if(sim != undefined) {
+            sim.destroy();
+            sim = undefined;
+        }
+
+        if(renderer != undefined) {
+            renderer.destroy();
+            renderer = undefined;
+        }
+        
+        //Prepare Particles
+        var particle1 = new Particle(1.60217662e-19, 9.109e-31, 2.18e-15, new Vector2(-5.76e-15, 0));
+        var particle2 = new Particle(-1.60217662e-19, 9.109e-31, 2.18e-15, new Vector2(0, 0));
+        var particle3 = new Particle(1.60217662e-19, 9.109e-31, 2.18e-15, new Vector2(5.76e-15, 0));
+        var canvas = document.getElementById("canvas");
+        renderer = new Renderer(canvas, 1e-14, 1e-14);
+
+        renderer.zoomAmount = 2;
+        sim = new ElectricFieldVisualizer(renderer);
+
+        let particleAmount = document.getElementById("particleAmount").selectedIndex + 1;
+
+        if(particleAmount == 1) {
+            sim.addParticle(particle2);
+        }else if(particleAmount == 2) {
+            sim.addParticle(particle1);
+            sim.addParticle(particle3);
+        }else {
+            sim.addParticle(particle1);
+            sim.addParticle(particle2);
+            sim.addParticle(particle3);
+        }
+
+
+        updateParticleSettingContainerVisiblity();
+        updateParticleCharges();
+    }
+
+    function updateParticleSettingContainerVisiblity() {
+        let particleAmount = document.getElementById("particleAmount").selectedIndex + 1;
+        document.getElementById("particleChargeContainer1").style.display = 'none';
+        document.getElementById("particleChargeContainer2").style.display = 'none';
+        document.getElementById("particleChargeContainer3").style.display = 'none';
+
+        if(particleAmount == 1) {
+            document.getElementById("particleChargeContainer1").style.display = 'block';
+        }else if(particleAmount == 2) {
+            document.getElementById("particleChargeContainer1").style.display = 'block';
+            document.getElementById("particleChargeContainer2").style.display = 'block';
+        }else {
+            document.getElementById("particleChargeContainer1").style.display = 'block';
+            document.getElementById("particleChargeContainer2").style.display = 'block';
+            document.getElementById("particleChargeContainer3").style.display = 'block';
+        }
+    }
+
+    function updateParticleCharges() {
+        let particle1Charge = document.getElementById("particle1chargefactor").value * 1.60217662e-19;
+        let particle2Charge = document.getElementById("particle2chargefactor").value * 1.60217662e-19;
+        let particle3Charge = document.getElementById("particle3chargefactor").value * 1.60217662e-19;
+
+        if(!document.getElementById("particle1positivecharge").checked) {
+            particle1Charge *= -1;
+        }
+
+        if(!document.getElementById("particle2positivecharge").checked) {
+            particle2Charge *= -1;
+        }
+
+        if(!document.getElementById("particle3positivecharge").checked) {
+            particle3Charge *= -1;
+        }
+
+        let particleAmount = document.getElementById("particleAmount").selectedIndex + 1;
+
+        if(particleAmount == 1) {
+            sim.particles[0].charge = particle1Charge;
+       }else if(particleAmount == 2) {
+            sim.particles[0].charge = particle1Charge;
+            sim.particles[1].charge = particle2Charge;
+       }else {
+            sim.particles[0].charge = particle1Charge;
+            sim.particles[1].charge = particle2Charge;
+            sim.particles[2].charge = particle3Charge;
+       }
+    }
+</script>
+</html>
