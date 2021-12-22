@@ -12,5 +12,13 @@ function initPage() {
                 <a href="https://eliaschenker.com/physics-simulations/newtonian_force/gravitationalfield.html">Gravitational Field Visualization</a>
             </div>
         </div>
+        <div class="dropdown">
+            <button class="dropbtn">Electrostatics
+                <i class="fa fa-caret-down"></i>
+            </button>
+            <div class="dropdown-content">
+                <li><a href="https://eliaschenker.com/physics-simulations/electrostatics/electricfield.html">Electric Field Visualization</a></li>
+            </div>
+        </div>
      `;
 }
