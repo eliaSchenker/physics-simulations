@@ -32,7 +32,7 @@ class GravitationalFieldVisualizer {
         return finalAcceleration;
     }
 
-    getFieldPoints(bodies, pointAmount, startDistance, arrowDistance) {
+    getFieldLines(bodies, pointAmount, startDistance, arrowDistance) {
         let result = []; //Result array consisting of arrays of points
         let initialPoints = [];
         let averagePosX = 0;
@@ -98,6 +98,47 @@ class GravitationalFieldVisualizer {
         return result;
     }
 
+    getFieldPoints(bodies, startDistance, xPointAmount=100, yPointAmount=100) {
+        let result = [];
+        
+        let averagePosX = 0;
+        let averagePosY = 0;
+        for (let i = 0; i < bodies.length; i++) {
+            averagePosX += bodies[i].position.x;
+            averagePosY += bodies[i].position.y;
+        }
+        averagePosX /= bodies.length;
+        averagePosY /= bodies.length;
+
+        startDistance  = parseInt(startDistance);
+
+        let gridStartPoint = new Vector2(averagePosX - startDistance, averagePosY - startDistance);
+        let gridEndPoint = new Vector2(averagePosX + startDistance, averagePosY + startDistance);
+
+        let xStep = (gridEndPoint.x - gridStartPoint.x) / xPointAmount;
+        let yStep = (gridEndPoint.y - gridStartPoint.y) / yPointAmount;
+
+        for (let y = 0; y < yPointAmount; y++) {
+            let row = [];
+            for (let x = 0; x < xPointAmount; x++) {
+                let point = new Vector2(gridStartPoint.x + x * xStep, gridStartPoint.y + y * yStep);
+                let inAnyBody = false;
+                for (let i = 0; i < bodies.length; i++) {
+                    let distance = point.distanceTo(bodies[i].position);
+                    if(distance <= bodies[i].radius) {
+                        inAnyBody = true;
+                        break;
+                    }
+                }
+                if(!inAnyBody) {
+                    row.push([point, this.getAccelerationAtPoint(point)]);
+                }
+            }
+            result.push(row);
+        }
+        return result;
+    }
+
     addBody(body) {
         this.physicalBodies.push(body);
     }
@@ -110,8 +151,8 @@ class GravitationalFieldVisualizer {
             body.addInteractionEvents(undefined, (function(e) {this.physicalBodies[tempIndex].position = e}).bind(this));
             this.renderer.toRenderObjects.push(body);
         }
-
-        let fieldPoints = this.getFieldPoints(this.physicalBodies, this.lineAmount, this.arrowStartDistance, 1000000);
+        
+        let fieldPoints = this.getFieldLines(this.physicalBodies, this.lineAmount, this.arrowStartDistance, 1000000);
         
         for (let i = 0; i < fieldPoints.length; i++) {
             for (let j = 0; j < fieldPoints[i].length - 1; j++) {
