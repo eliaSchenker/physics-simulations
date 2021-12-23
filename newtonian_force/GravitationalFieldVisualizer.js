@@ -57,7 +57,7 @@ class GravitationalFieldVisualizer {
         let safteyCounter = 0;
         while (true) {
             safteyCounter+=1;
-            if(safteyCounter == 1000) {
+            if(safteyCounter == 200) {
                 break;
             }
 
