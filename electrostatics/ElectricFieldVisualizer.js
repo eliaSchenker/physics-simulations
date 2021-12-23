@@ -70,10 +70,10 @@ class ElectricFieldVisualizer {
         averagePosY /= particles.length;
 
         //Create a cloned version of the original particles array
-        let clonedArray = [...particles];
+        let clonedArray = ObjectUtil.clone(particles);
 
         //Sort the array by charge (calculate the field lines of positivly charged particles first)
-        clonedArray.sort(function(a, b) { if(a.charge > 0) {return 1} else { return -1}});
+        clonedArray.sort(function(a, b) { if(a.charge < 0) {return 1} else { return -1}});
 
         for (let index = 0; index < clonedArray.length; index++) {
             
@@ -84,7 +84,21 @@ class ElectricFieldVisualizer {
             let step = 360 / pointAmount;
             for (let i = 0; i < pointAmount; i++) {
                 let angle = 1.5708 + step * i * Math.PI / 180;
+
                 let point = pointA.moveAtAngle(angle, clonedArray[index].radius * 1.01);
+                if(clonedArray[index].hitpoints != undefined) {
+                    let angleCloseToOtherAngle = false;
+                    for (let i = 0; i < clonedArray[index].hitpoints.length; i++) {
+                        let distance = clonedArray[index].hitpoints[i].distanceTo(point);
+                        if(distance < clonedArray[index].radius / 5) {
+                            angleCloseToOtherAngle = true;
+                            break;
+                        }
+                    }
+                    if(angleCloseToOtherAngle) {
+                        continue;
+                    }
+                }
                 initialPoints.push(point);
                 result.push([point]);
             }
@@ -110,9 +124,10 @@ class ElectricFieldVisualizer {
                 for(let j = 0;j<initialPoints.length;j++) {
                     if(initialPoints[j] != undefined) {
                         let radianAngle = this.getForceAtPoint(initialPoints[j]).getAngleRadians();
-                        /*if(clonedArray[index].charge < 0) {
+                        //If the charge is negative, calculate the lines backwards (invert the angle)
+                        if(clonedArray[index].charge < 0) {
                             radianAngle -= Math.PI;
-                        }*/
+                        }
                         let newPoint = initialPoints[j].moveAtAngle(radianAngle, arrowDistance);
                         initialPoints[j] = newPoint;
                         
@@ -132,11 +147,18 @@ class ElectricFieldVisualizer {
                             let distanceToBodyBorder = distance - clonedArray[inRadiusBodyIndex].radius;
                             let angleToBody = result[j][result[j].length - 1].angleTo(clonedArray[inRadiusBodyIndex].position);
                             result[j].push(result[j][result[j].length - 1].moveAtAngle(angleToBody, distanceToBodyBorder));
+
+                            if(clonedArray[inRadiusBodyIndex].charge < 0) {
+                                if(clonedArray[inRadiusBodyIndex].hitpoints == undefined) {
+                                    clonedArray[inRadiusBodyIndex].hitpoints = [];
+                                }
+                                clonedArray[inRadiusBodyIndex].hitpoints.push(newPoint);
+                            }
                         }
                     }
                 }
             }
-            if( clonedArray[index].charge < 0) {
+            if(clonedArray[index].charge < 0) {
                 for (let i = 0; i < result.length; i++) {
                     result[i].reverse();
                 }
