@@ -10,6 +10,7 @@
 <body onload="resetSimulation();initPage();">
     <nav></nav>
     <h1>Gravitational Field Visualization</h1>
+    <p>Hint: You can move the test body (red) with your mouse</p>
     <p>Hint: The bodies and the camera can be moved with your mouse.</p>
     <canvas width="750" height="750" id="canvas"></canvas>
     <div id="controlDiv">
@@ -62,7 +63,7 @@
         <p id="body2masscontainer">Body 2 Mass: <input type="range" min=7.34767309e20 max=1.4695346e+23 value=7.34767309e22 id="body2mass" onchange="updateBodyMasses();"></p>
         <p id="body3masscontainer">Body 3 Mass: <input type="range" min=7.34767309e20 max=1.4695346e+23 value=7.34767309e22 id="body3mass" onchange="updateBodyMasses();"></p>
         <input type="checkbox" id="linescolored" onchange="updateLineColoring();">
-        <label for="linescolored">Line color represents force strength?</label>
+        <label for="linescolored">Line color represents force strength</label>
         <p>Amount of lines</p>
         <input type="range" min=21 max=100 step=2 id="lineAmountInput" value=51 onchange="updateLineAmount();">
         <p>Field render distance</p>
