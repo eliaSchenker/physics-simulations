@@ -5,7 +5,7 @@ class ElectricFieldVisualizer {
         this.interval = setInterval(this.tick.bind(this), 0.01);
         this.renderer = renderer;
         this.particles = [];
-        this.testCharge = new Particle(-1.60217662e-19, 1, 2.18e-16, new Vector2(0, 4.7e-15));
+        this.testCharge = new Particle(1.60217662e-19, 1, 2.18e-16, new Vector2(0, 4.7e-15));
         this.lineAmount = 25;
         this.arrowStartDistance = 8e-16;
         this.areLinesColored = false;
@@ -27,7 +27,7 @@ class ElectricFieldVisualizer {
 
     static calculateForce(particle1, particle2) {
         var distance = particle1.position.distanceTo(particle2.position);
-        return ElectricFieldVisualizer.electricConstant * particle1.charge * particle2.charge / Math.pow(distance, 2);
+        return -1 * ElectricFieldVisualizer.electricConstant * particle1.charge * particle2.charge / Math.pow(distance, 2);
     }
 
     static calculateDirectionalForce(particle1, particle2, force) {
@@ -46,7 +46,7 @@ class ElectricFieldVisualizer {
     }
 
     getForceAtPoint(point) {
-        let tempParticle = new Particle(-1.60217662e-19, 1, 0, point); //Testparticle
+        let tempParticle = new Particle(1.60217662e-19, 1, 0, point); //Testparticle
         let finalForce = new Vector2(0, 0);
 
         for (let i = 0; i < this.particles.length; i++) {
@@ -189,6 +189,7 @@ class ElectricFieldVisualizer {
         this.testAcc = acc.x / acc.y;
         this.angle = acc.getAngleRadians();
         this.renderer.toRenderObjects.push(new ArrowRenderObject(testBody.position, testBody.position.moveAtAngle(acc.getAngleRadians(), 8e-16), "#FF0000"))
+        this.renderer.toRenderObjects.push(new TextRenderObject("25px Arial", "+",  new Vector2(testBody.position.x, testBody.position.y - 2.5e-16), "center", "#FF0000"));
         this.renderer.toRenderObjects.push(testBody);
 
         //Display all the charges
