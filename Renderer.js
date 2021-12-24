@@ -223,13 +223,50 @@ class Renderer {
       }
     }
 
+    /**
+     * Check if a given point is in a triangle
+     * @param {Vector2} point The point
+     * @param {Array} triangle An array of three points
+     * @returns Is the point in the triangle
+     */
+    pointInTriangle(point, triangle) {
+        //compute vectors & dot products
+        var cx = point.x, cy = point.y,
+        t0 = triangle[0], t1 = triangle[1], t2 = triangle[2],
+        v0x = t2.x-t0.x, v0y = t2.y-t0.y,
+        v1x = t1.x-t0.x, v1y = t1.y-t0.y,
+        v2x = cx-t0.x, v2y = cy-t0.y,
+        dot00 = v0x*v0x + v0y*v0y,
+        dot01 = v0x*v1x + v0y*v1y,
+        dot02 = v0x*v2x + v0y*v2y,
+        dot11 = v1x*v1x + v1y*v1y,
+        dot12 = v1x*v2x + v1y*v2y
+
+        // Compute barycentric coordinates
+        var b = (dot00 * dot11 - dot01 * dot01),
+            inv = b === 0 ? 0 : (1 / b),
+            u = (dot11*dot02 - dot01*dot12) * inv,
+            v = (dot00*dot12 - dot01*dot02) * inv
+        return u>=0 && v>=0 && (u+v < 1)
+    }
+
+    /**
+     * Check if a given point is in a rectangle
+     * @param {Vector2} point The point
+     * @param {Array} rectangle 
+     * @returns 
+     */
+    pointInRectangle(point, rectangle) {
+        //Check if the point is in the rectangle by checking if the point is in either of the two triangles making up the rectangle
+        return this.pointInTriangle(point, [rectangle[0], rectangle[1], rectangle[2]]) || this.pointInTriangle(point, [rectangle[0], rectangle[2], rectangle[3]]);
+    }
+
     getObjectsUnderMouse(mouseX, mouseY) {
         for (let i = 0; i < this.toRenderObjects.length; i++) {
             if(this.toRenderObjects[i].onClickEvent != undefined || this.toRenderObjects[i].onDragEvent != undefined) {
                 let collider = this.toRenderObjects[i].getCollisionRect(this.ctx, this);
-                if(mouseX > collider[0].x && mouseY < collider[0].y &&
-                    mouseX < collider[1].x && mouseY > collider[1].y) {
-                        return this.toRenderObjects[i];
+                if(this.pointInRectangle(new Vector2(mouseX, mouseY), collider)) {
+                    return this.toRenderObjects[i];
                 }
             }
         }
@@ -357,7 +394,8 @@ class TextRenderObject extends RenderObject{
         let textWidth = ctx.measureText(this.text);
         let textHeight = parseInt(ctx.font.match(/\d+/), 10);
         let canvasPosition = rendererReference.worldToCanvasPosition(this.position);
-        return [canvasPosition, new Vector2(canvasPosition.x + textWidth, canvasPosition.y + textHeight)];
+        return [canvasPosition, new Vector2(canvasPosition.x + textWidth, canvasPosition.y),
+            new Vector2(canvasPosition.x + textWidth, canvasPosition.y + textHeight),  new Vector2(canvasPosition.x, canvasPosition.y + textHeight)];
     }
 }
 
@@ -408,7 +446,9 @@ class ArrowRenderObject extends RenderObject {
 
     getCollisionRect(ctx, rendererReference) {
         let canvasEndPosition = rendererReference.worldToCanvasPosition(this.endPosition);
-        return [new Vector2(canvasEndPosition.x - 10, canvasEndPosition.y + 15), new Vector2(canvasEndPosition.x + 10,  canvasEndPosition.y - 10)];
+        let topLeftPos = new Vector2(canvasEndPosition.x - 10, canvasEndPosition.y + 15);
+        let bottomRightPos = new Vector2(canvasEndPosition.x + 10,  canvasEndPosition.y - 10);
+        return [topLeftPos, new Vector2(bottomRightPos.x, topLeftPos.y), bottomRightPos, new Vector2(topLeftPos.x, bottomRightPos.y)];
     }
 }
 
@@ -441,7 +481,9 @@ class CircleRenderObject extends RenderObject {
 
     getCollisionRect(ctx, rendererReference) {
         return [rendererReference.worldToCanvasPosition(new Vector2(this.position.x - this.radius, this.position.y - this.radius)),
-            rendererReference.worldToCanvasPosition(new Vector2(this.position.x + this.radius, this.position.y + this.radius))];
+            rendererReference.worldToCanvasPosition(new Vector2(this.position.x + this.radius, this.position.y - this.radius)),
+            rendererReference.worldToCanvasPosition(new Vector2(this.position.x + this.radius, this.position.y + this.radius)),
+            rendererReference.worldToCanvasPosition(new Vector2(this.position.x - this.radius, this.position.y + this.radius))];
     }
 }
 
@@ -483,7 +525,7 @@ class RectRenderObject extends RenderObject {
     getCollisionRect(ctx, rendererReference) {
         let canvasPosition = rendererReference.worldToCanvasPosition(this.position);
         let targetPosition = rendererReference.worldToCanvasPosition(new Vector2(this.position.x + this.size.x, this.position.y + this.size.y));
-        return [canvasPosition, targetPosition];
+        return [canvasPosition, new Vector2(targetPosition.x, canvasPosition.y), targetPosition, new Vector2(canvasPosition.x, targetPosition.y)];
     }
 }
 
@@ -519,6 +561,49 @@ class LineRenderObject extends RenderObject {
         ctx.lineTo(canvasEndPosition.x, canvasEndPosition.y);
         ctx.stroke();
         ctx.lineWidth = originalLineWidth;
+    }
+}
+
+class PolygonRenderObject extends RenderObject {
+    constructor(positions, filled=false, color="#000000") {
+        super(positions, color);
+        this.filled = filled;
+    }
+
+    /**
+     * Draw the Polygon
+     * @param {CanvasRenderingContext2D} ctx Rendering Context
+     * @param {Renderer} rendererReference Reference to the Renderer Object
+     */
+    draw(ctx, rendererReference) {
+        let positions = [];
+        for (let i = 0; i < this.position.length; i++) {
+            positions.push(rendererReference.worldToCanvasPosition(this.position[i]));
+        }
+        ctx.fillStyle = this.color;
+        ctx.strokeStyle = this.color;
+
+        let point = positions[0];
+
+        ctx.beginPath();
+        ctx.moveTo(point.x, point.y);   
+        for (let i = 1; i < positions.length; i++) {
+            ctx.lineTo(positions[i].x, positions[i].y);
+        }
+        ctx.closePath();
+        if(this.filled) {
+            ctx.fill();
+        }else {
+            ctx.stroke();
+        }
+    }
+
+    getCollisionRect(ctx, rendererReference) {
+        let positions = [];
+        for (let i = 0; i < this.position.length; i++) {
+            positions.push(rendererReference.worldToCanvasPosition(this.position[i]));
+        }
+        return positions;
     }
 }
 
@@ -672,6 +757,31 @@ class Vector2 {
      */
     moveAtAngle(angle, distance) {
         return new Vector2(this.x + (distance * Math.cos(angle)), this.y + (distance * Math.sin(angle)));
+    }
+
+    /**
+     * Rotates the point around a centerPoint with an angle
+     * @param {Vector2} centerPoint The centerpoint
+     * @param {Number} angle The angle in degrees
+     * @returns The new point
+     */
+    rotateAroundPoint(centerPoint, angle) {
+        let s = Math.sin(angle);
+        let c = Math.cos(angle);
+
+        let x = this.x;
+        let y = this.y;
+
+        // translate point back to origin:
+        x -= centerPoint.x;
+        y -= centerPoint.y;
+
+        // rotate point
+        let xnew = x * c - y * s;
+        let ynew = x * s + y * c;
+
+        // translate point back:
+        return new Vector2(xnew + centerPoint.x, ynew + centerPoint.y);
     }
 
 }
