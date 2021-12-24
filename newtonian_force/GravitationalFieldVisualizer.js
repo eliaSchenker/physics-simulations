@@ -6,6 +6,7 @@ class GravitationalFieldVisualizer {
         this.lineAmount = 50;
         this.arrowStartDistance = 100000000;
         this.areLinesColored = false;
+        this.testBody = new PhysicalBody(1, 1000000, new Vector2(0, 40000000), new Vector2(0, 0), "");
     }
 
     /**
@@ -156,6 +157,15 @@ class GravitationalFieldVisualizer {
             body.addInteractionEvents(undefined, (function(e) {this.physicalBodies[tempIndex].position = e}).bind(this));
             this.renderer.toRenderObjects.push(body);
         }
+
+        //Display Test Charge
+        let testBody = new CircleRenderObject(this.testBody.radius, this.testBody.position, "#FF0000");
+        testBody.addInteractionEvents(undefined, (function(e) {this.testBody.position = e}).bind(this));
+        let acc = this.getAccelerationAtPoint(testBody.position);
+        this.angle = acc.getAngleRadians();
+        this.renderer.toRenderObjects.push(new ArrowRenderObject(testBody.position, testBody.position.moveAtAngle(acc.getAngleRadians(), 5000000), "#FF0000"))
+        this.renderer.toRenderObjects.push(testBody);
+
         
         let fieldPoints = this.getFieldLines(this.physicalBodies, this.lineAmount, this.arrowStartDistance, 1000000);
         
