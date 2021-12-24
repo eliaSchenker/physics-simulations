@@ -5,6 +5,7 @@ class GravitationalFieldVisualizer {
         this.physicalBodies = [];
         this.lineAmount = 50;
         this.arrowStartDistance = 100000000;
+        this.areLinesColored = false;
     }
 
     /**
@@ -73,7 +74,8 @@ class GravitationalFieldVisualizer {
             }
             for(let j = 0;j<initialPoints.length;j++) {
                 if(initialPoints[j] != undefined) {
-                    let radianAngle = this.getAccelerationAtPoint(initialPoints[j]).getAngleRadians();
+                    let acceleration = this.getAccelerationAtPoint(initialPoints[j]);
+                    let radianAngle = acceleration.getAngleRadians();
                     let newPoint = initialPoints[j].moveAtAngle(radianAngle, arrowDistance);
                     initialPoints[j] = newPoint;
                     
@@ -85,12 +87,15 @@ class GravitationalFieldVisualizer {
                         }
                     }
                     if(inRadiusBodyIndex == -1) {
+                        newPoint["forceAmount"] = acceleration.getMagnitude();
                         result[j].push(newPoint);
                     }else {
                         let distance = result[j][result[j].length - 1].distanceTo(bodies[inRadiusBodyIndex].position);
                         let distanceToBodyBorder = distance - bodies[inRadiusBodyIndex].radius;
                         let angleToBody = result[j][result[j].length - 1].angleTo(bodies[inRadiusBodyIndex].position);
-                        result[j].push(result[j][result[j].length - 1].moveAtAngle(angleToBody, distanceToBodyBorder));
+                        newPoint = result[j][result[j].length - 1].moveAtAngle(angleToBody, distanceToBodyBorder);
+                        newPoint["forceAmount"] = acceleration.getMagnitude();
+                        result[j].push(newPoint);
                     }
                 }
             }
@@ -154,20 +159,42 @@ class GravitationalFieldVisualizer {
         
         let fieldPoints = this.getFieldLines(this.physicalBodies, this.lineAmount, this.arrowStartDistance, 1000000);
         
+        let minForce = Number.MAX_VALUE;
+        let maxForce = Number.MIN_VALUE;
+
+        for (let i = 0; i < fieldPoints.length; i++) {
+            for (let j = 0; j < fieldPoints[i].length; j++) {
+                let force = fieldPoints[i][j]["forceAmount"];
+                if(force < minForce) {
+                    minForce = force;
+                }
+                if(force > maxForce) {
+                    maxForce = force;
+                }
+            }
+        }
+
         for (let i = 0; i < fieldPoints.length; i++) {
             for (let j = 0; j < fieldPoints[i].length - 1; j++) {
+                let hexColor = "#000000";
+                if(this.areLinesColored) {
+                    let factor = ((fieldPoints[i][j].forceAmount - minForce) / (maxForce - minForce))
+                    let color = ColorUtil.interpolateColor([0, 189, 252], [255, 0, 0], factor);
+                    hexColor = ColorUtil.rgbToHex(color[0], color[1], color[2]);
+                }
+
                 if(j % 20 == 0 && j != 0) {
                     let angle = fieldPoints[i][j].angleTo(fieldPoints[i][j - 1]);
                     let leftArrowPoint = fieldPoints[i][j].moveAtAngle(angle + 0.785398, 1000000);
                     let rightArrowPoint = fieldPoints[i][j].moveAtAngle(angle - 0.785398, 1000000);
 
-                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], leftArrowPoint));
-                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], rightArrowPoint));
+                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], leftArrowPoint, 1, hexColor));
+                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], rightArrowPoint, 1, hexColor));
                 }
                 if(j != fieldPoints[i].length - 2) {
-                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], fieldPoints[i][j + 1], 1, "#000000"));
+                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], fieldPoints[i][j + 1], 1, hexColor));
                 }else {
-                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], fieldPoints[i][j + 1], 1, "#000000"));
+                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], fieldPoints[i][j + 1], 1, hexColor));
                 }
             }
         }

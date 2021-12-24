@@ -8,6 +8,7 @@ class ElectricFieldVisualizer {
         this.testCharge = new Particle(-1.60217662e-19, 1, 2.18e-16, new Vector2(0, 4.7e-15));
         this.lineAmount = 25;
         this.arrowStartDistance = 8e-16;
+        this.areLinesColored = false;
     }
 
     /**
@@ -123,12 +124,14 @@ class ElectricFieldVisualizer {
                 }
                 for(let j = 0;j<initialPoints.length;j++) {
                     if(initialPoints[j] != undefined) {
-                        let radianAngle = this.getForceAtPoint(initialPoints[j]).getAngleRadians();
+                        let force = this.getForceAtPoint(initialPoints[j]);
+                        let radianAngle = force.getAngleRadians();
                         //If the charge is negative, calculate the lines backwards (invert the angle)
                         if(clonedArray[index].charge < 0) {
                             radianAngle -= Math.PI;
                         }
                         let newPoint = initialPoints[j].moveAtAngle(radianAngle, arrowDistance);
+                        newPoint["forceAmount"] = force.getMagnitude();
                         initialPoints[j] = newPoint;
                         
                         //Check if the line hits any particle
@@ -146,7 +149,9 @@ class ElectricFieldVisualizer {
                             let distance = result[j][result[j].length - 1].distanceTo(clonedArray[inRadiusBodyIndex].position);
                             let distanceToBodyBorder = distance - clonedArray[inRadiusBodyIndex].radius;
                             let angleToBody = result[j][result[j].length - 1].angleTo(clonedArray[inRadiusBodyIndex].position);
-                            result[j].push(result[j][result[j].length - 1].moveAtAngle(angleToBody, distanceToBodyBorder));
+                            newPoint = result[j][result[j].length - 1].moveAtAngle(angleToBody, distanceToBodyBorder);
+                            newPoint["forceAmount"] = force.getMagnitude();
+                            result[j].push(newPoint);
 
                             if(clonedArray[inRadiusBodyIndex].charge < 0) {
                                 if(clonedArray[inRadiusBodyIndex].hitpoints == undefined) {
@@ -199,21 +204,43 @@ class ElectricFieldVisualizer {
         
         let fieldPoints = this.getFieldPoints(this.particles, this.lineAmount, this.arrowStartDistance, 1e-16);
 
+        let minForce = Number.MAX_VALUE;
+        let maxForce = Number.MIN_VALUE;
+
+        for (let i = 0; i < fieldPoints.length; i++) {
+            for (let j = 0; j < fieldPoints[i].length; j++) {
+                let force = fieldPoints[i][j]["forceAmount"];
+                if(force < minForce) {
+                    minForce = force;
+                }
+                if(force > maxForce) {
+                    maxForce = force;
+                }
+            }
+        }
         
+
         for (let i = 0; i < fieldPoints.length; i++) {
             for (let j = 0; j < fieldPoints[i].length - 1; j++) {
+                let hexColor = "#000000";
+                if(this.areLinesColored) {
+                    let factor = ((fieldPoints[i][j].forceAmount - minForce) / (maxForce - minForce))
+                    let color = ColorUtil.interpolateColor([0, 189, 252], [255, 0, 0], factor);
+                    hexColor = ColorUtil.rgbToHex(color[0], color[1], color[2]);
+                }
+                
                 if(j % 20 == 0 && j != 0) {
                     let angle = fieldPoints[i][j].angleTo(fieldPoints[i][j - 1]);
                     let leftArrowPoint = fieldPoints[i][j].moveAtAngle(angle + 0.785398, 4e-16);
                     let rightArrowPoint = fieldPoints[i][j].moveAtAngle(angle - 0.785398, 4e-16);
 
-                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], leftArrowPoint));
-                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], rightArrowPoint));
+                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], leftArrowPoint, 1, hexColor));
+                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], rightArrowPoint, 1, hexColor));
                 }
                 if(j != fieldPoints[i].length - 2) {
-                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], fieldPoints[i][j + 1], 1, "#000000"));
+                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], fieldPoints[i][j + 1], 1, hexColor));
                 }else {
-                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], fieldPoints[i][j + 1], 1, "#000000"));
+                    this.renderer.toRenderObjects.push(new LineRenderObject(fieldPoints[i][j], fieldPoints[i][j + 1], 1, hexColor));
                 }
             }
         }

@@ -61,6 +61,8 @@
         <p id="body1masscontainer">Body 1 Mass: <input type="range" min=7.34767309e20 max=1.4695346e+23 value=7.34767309e22 id="body1mass" onchange="updateBodyMasses();"></p>
         <p id="body2masscontainer">Body 2 Mass: <input type="range" min=7.34767309e20 max=1.4695346e+23 value=7.34767309e22 id="body2mass" onchange="updateBodyMasses();"></p>
         <p id="body3masscontainer">Body 3 Mass: <input type="range" min=7.34767309e20 max=1.4695346e+23 value=7.34767309e22 id="body3mass" onchange="updateBodyMasses();"></p>
+        <input type="checkbox" id="linescolored" onchange="updateLineColoring();">
+        <label for="linescolored">Line color represents force strength?</label>
         <p>Amount of lines</p>
         <input type="range" min=21 max=100 step=2 id="lineAmountInput" value=51 onchange="updateLineAmount();">
         <p>Field render distance</p>
@@ -119,6 +121,7 @@
         updateArrowStartDistance();
         updateBodyMassSliderVisibility();
         updateBodyMasses();
+        updateLineColoring();
     }
 
     function updateBodyMassSliderVisibility() {
@@ -164,6 +167,10 @@
 
     function updateArrowStartDistance() {
         sim.arrowStartDistance = document.getElementById("arrowStartDistanceInput").value;
+    }
+
+    function updateLineColoring() {
+        sim.areLinesColored = document.getElementById("linescolored").checked;
     }
 </script>
 </html>

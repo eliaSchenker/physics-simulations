@@ -78,7 +78,9 @@
             <option value=1>1 Particle</option>
             <option value=2 selected>2 Particles</option>
             <option value=3>3 Particles</option>
-        </select>
+        </select><br><br>
+        <input type="checkbox" id="linescolored" onchange="updateLineColoring();">
+        <label for="linescolored">Line color represents force strength?</label>
         <p>Particle Charges:</p>
         <div id="particleChargeContainer1">
             <b>Particle 1:</b><br>
@@ -107,6 +109,7 @@
 <script src="../util/DateUtil.js" type="text/javascript"></script>
 <script src="../util/SIUtil.js" type="text/javascript"></script>
 <script src="../util/ObjectUtil.js" type="text/javascript"></script>
+<script src="../util/ColorUtil.js" type="text/javascript"></script>
 <script src="../pageloader.js" type="text/javascript"></script>
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -151,6 +154,7 @@
 
         updateParticleSettingContainerVisiblity();
         updateParticleCharges();
+        updateLineColoring();
     }
 
     function updateParticleSettingContainerVisiblity() {
@@ -200,6 +204,10 @@
             sim.particles[1].charge = particle2Charge;
             sim.particles[2].charge = particle3Charge;
        }
+    }
+
+    function updateLineColoring() {
+        sim.areLinesColored = document.getElementById("linescolored").checked;
     }
 </script>
 </html>
