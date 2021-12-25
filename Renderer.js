@@ -421,10 +421,11 @@ class CircleRenderObject extends RenderObject {
      * @param {Vector2} position Position of the center of the circle
      * @param {String} color Color of the circle (optional)
      */
-    constructor(radius, position, color="#000000") {
+    constructor(radius, position, color="#000000", filled=false) {
         super(position, color);
         this.radius = radius;
         this.color = color;
+        this.filled = filled;
     }
 
     /**
@@ -437,8 +438,13 @@ class CircleRenderObject extends RenderObject {
         let finishPosition = rendererReference.worldToCanvasPosition(new Vector2(this.position.x + this.radius, 0));
         ctx.beginPath();
         ctx.strokeStyle = this.color;
+        ctx.fillStyle = this.color;
         ctx.arc(canvasPosition.x, canvasPosition.y, finishPosition.x - canvasPosition.x, 0, 2 * Math.PI);
-        ctx.stroke();
+        if(this.filled) {
+            ctx.fill();
+        }else {
+            ctx.stroke();
+        }
     }
 
     getCollisionRect(ctx, rendererReference) {
