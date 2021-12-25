@@ -223,49 +223,11 @@ class Renderer {
       }
     }
 
-    /**
-     * Check if a given point is in a triangle
-     * @param {Vector2} point The point
-     * @param {Array} triangle An array of three points
-     * @returns Is the point in the triangle
-     */
-    pointInTriangle(point, triangle) {
-        //compute vectors & dot products
-        var cx = point.x, cy = point.y,
-        t0 = triangle[0], t1 = triangle[1], t2 = triangle[2],
-        v0x = t2.x-t0.x, v0y = t2.y-t0.y,
-        v1x = t1.x-t0.x, v1y = t1.y-t0.y,
-        v2x = cx-t0.x, v2y = cy-t0.y,
-        dot00 = v0x*v0x + v0y*v0y,
-        dot01 = v0x*v1x + v0y*v1y,
-        dot02 = v0x*v2x + v0y*v2y,
-        dot11 = v1x*v1x + v1y*v1y,
-        dot12 = v1x*v2x + v1y*v2y
-
-        // Compute barycentric coordinates
-        var b = (dot00 * dot11 - dot01 * dot01),
-            inv = b === 0 ? 0 : (1 / b),
-            u = (dot11*dot02 - dot01*dot12) * inv,
-            v = (dot00*dot12 - dot01*dot02) * inv
-        return u>=0 && v>=0 && (u+v < 1)
-    }
-
-    /**
-     * Check if a given point is in a rectangle
-     * @param {Vector2} point The point
-     * @param {Array} rectangle 
-     * @returns 
-     */
-    pointInRectangle(point, rectangle) {
-        //Check if the point is in the rectangle by checking if the point is in either of the two triangles making up the rectangle
-        return this.pointInTriangle(point, [rectangle[0], rectangle[1], rectangle[2]]) || this.pointInTriangle(point, [rectangle[0], rectangle[2], rectangle[3]]);
-    }
-
     getObjectsUnderMouse(mouseX, mouseY) {
         for (let i = 0; i < this.toRenderObjects.length; i++) {
             if(this.toRenderObjects[i].onClickEvent != undefined || this.toRenderObjects[i].onDragEvent != undefined) {
                 let collider = this.toRenderObjects[i].getCollisionRect(this.ctx, this);
-                if(this.pointInRectangle(new Vector2(mouseX, mouseY), collider)) {
+                if(new Vector2(mouseX, mouseY).isPointInRectangle(collider)) {
                     return this.toRenderObjects[i];
                 }
             }
@@ -760,6 +722,17 @@ class Vector2 {
     }
 
     /**
+     * Moves the point towards another point with a distance
+     * @param {Vector2} point The point
+     * @param {Number} distance The distance
+     * @returns the new point
+     */
+    moveTowardsPoint(point, distance) {
+        let angle = this.angleTo(point);
+        return this.moveAtAngle(angle, distance);
+    }
+
+    /**
      * Rotates the point around a centerPoint with an angle
      * @param {Vector2} centerPoint The centerpoint
      * @param {Number} angle The angle in degrees
@@ -784,4 +757,39 @@ class Vector2 {
         return new Vector2(xnew + centerPoint.x, ynew + centerPoint.y);
     }
 
+    /**
+     * Check if the point is in a triangle
+     * @param {Array} triangle An array of three points
+     * @returns Is the point in the triangle
+     */
+     isPointInTriangle(triangle) {
+        //compute vectors & dot products
+        var cx = this.x, cy = this.y,
+        t0 = triangle[0], t1 = triangle[1], t2 = triangle[2],
+        v0x = t2.x-t0.x, v0y = t2.y-t0.y,
+        v1x = t1.x-t0.x, v1y = t1.y-t0.y,
+        v2x = cx-t0.x, v2y = cy-t0.y,
+        dot00 = v0x*v0x + v0y*v0y,
+        dot01 = v0x*v1x + v0y*v1y,
+        dot02 = v0x*v2x + v0y*v2y,
+        dot11 = v1x*v1x + v1y*v1y,
+        dot12 = v1x*v2x + v1y*v2y
+
+        // Compute barycentric coordinates
+        var b = (dot00 * dot11 - dot01 * dot01),
+            inv = b === 0 ? 0 : (1 / b),
+            u = (dot11*dot02 - dot01*dot12) * inv,
+            v = (dot00*dot12 - dot01*dot02) * inv
+        return u>=0 && v>=0 && (u+v < 1)
+    }
+
+    /**
+     * Check if the point is in a rectangle
+     * @param {Array} rectangle 
+     * @returns Is the point in the rectangle
+     */
+     isPointInRectangle(rectangle) {
+        //Check if the point is in the rectangle by checking if the point is in either of the two triangles making up the rectangle
+        return this.isPointInTriangle([rectangle[0], rectangle[1], rectangle[2]]) || this.isPointInTriangle([rectangle[0], rectangle[2], rectangle[3]]);
+    }
 }
