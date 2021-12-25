@@ -218,26 +218,49 @@ class MagneticSimulation {
         }
 
         //Render the compass
-        let forceOnCompass = this.getForceAtPoint(this.compassPosition);
-        let compassRadius = 0.01;
-        let forceAngle = forceOnCompass.getAngleRadians() - Math.PI;
+        let forceOnCompass = this.getForceAtPoint(this.compassPosition); //Calculate the force at the compass position
+        let compassRadius = 0.01; //Fixed value for compass radius
+        let forceAngle = forceOnCompass.getAngleRadians() - Math.PI; //Calculate the angle of the force
         //Outer compass circle
         let outerCompassCircle = new CircleRenderObject(compassRadius, this.compassPosition, "#999999", true);
-        outerCompassCircle.addInteractionEvents(undefined, (function(e) { this.compassPosition = e;}).bind(this));
+        outerCompassCircle.addInteractionEvents(undefined, (function(e) { this.compassPosition = e;}).bind(this)); //Add the drag event
         //Inner compass circle
         let innerCompassCircle = new CircleRenderObject(compassRadius * 0.9, this.compassPosition, "#cfcfcf", true);
 
+        //Add the circles to the renderer
+        this.renderer.toRenderObjects.push(outerCompassCircle);
+        this.renderer.toRenderObjects.push(innerCompassCircle);
+
+        //Draw cross in middle of compass
+        for (let i = 0; i < 8; i++) {
+            let sectionSize = i % 2 == 0 ? compassRadius * 0.1 : compassRadius * 0.05;
+            let sectionLength = i % 2 == 0 ? compassRadius * 0.8 : compassRadius * 0.6;
+            let sectionAngle = 0.785398 * i; //45 Degree Section sizes
+            let topPoint = this.compassPosition.moveAtAngle(sectionAngle, sectionLength);
+            let leftPoint = this.compassPosition.moveAtAngle(sectionAngle - 1.5708, sectionSize);
+            let rightPoint = this.compassPosition.moveAtAngle(sectionAngle + 1.5708, sectionSize);
+            this.renderer.toRenderObjects.push(new PolygonRenderObject([topPoint, leftPoint, rightPoint], true, "#b8b8b8"));
+        }
+
+        //Render Object for the North Compass needle
         let northNeedle = new PolygonRenderObject([this.compassPosition.moveAtAngle(forceAngle, compassRadius * 0.75), 
                                                    this.compassPosition.moveAtAngle(forceAngle + 1.5708, compassRadius * 0.2),
                                                    this.compassPosition.moveAtAngle(forceAngle - 1.5708, compassRadius * 0.2)], true, "#ff4d4d");
+        //Render Object for the South Compass needle
         let southNeedle = new PolygonRenderObject([this.compassPosition.moveAtAngle(forceAngle + Math.PI, compassRadius * 0.75), 
                                                    this.compassPosition.moveAtAngle(forceAngle + 1.5708, compassRadius * 0.2),
                                                    this.compassPosition.moveAtAngle(forceAngle - 1.5708, compassRadius * 0.2)], true, "#ffffff");
 
-        this.renderer.toRenderObjects.push(outerCompassCircle);
-        this.renderer.toRenderObjects.push(innerCompassCircle);
+        //Add the needles and a middle circle to the renderer
         this.renderer.toRenderObjects.push(northNeedle);
         this.renderer.toRenderObjects.push(southNeedle);
+        this.renderer.toRenderObjects.push(new CircleRenderObject(compassRadius * 0.1, this.compassPosition, "#575757", true));
+
+        //Add angle markings to the compass
+        let step = Math.PI * 2 / 12;
+        for (let i = 0; i < 12; i++) {
+            this.renderer.toRenderObjects.push(new LineRenderObject(this.compassPosition.moveAtAngle(step * i, compassRadius * 0.9), this.compassPosition.moveAtAngle(step * i, compassRadius * 0.8), 2, "#999999"))
+        }
         
         this.renderer.render_frame();
     }
