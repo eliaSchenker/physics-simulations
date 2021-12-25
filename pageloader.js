@@ -20,5 +20,13 @@ function initPage() {
                 <li><a href="https://eliaschenker.com/physics-simulations/electrostatics/electricfield.html">Electric Field Visualization</a></li>
             </div>
         </div>
+        <div class="dropdown">
+            <button class="dropbtn">Magnetism
+                <i class="fa fa-caret-down"></i>
+            </button>
+            <div class="dropdown-content">
+                <li><a href="https://eliaschenker.com/physics-simulations/magnetism/magneticfield.html">Magnetic Field Visualization</a></li>
+            </div>
+        </div>
      `;
 }
