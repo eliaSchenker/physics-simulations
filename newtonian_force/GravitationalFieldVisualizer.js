@@ -19,7 +19,7 @@ class GravitationalFieldVisualizer {
     /**
      * Finishes the simulation of this Simulation Object
      */
-     destroy() {
+    destroy() {
         clearInterval(this.interval);
     }
 
