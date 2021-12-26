@@ -30,7 +30,7 @@ class ElectricFieldVisualizer {
         return -1 * ElectricFieldVisualizer.electricConstant * particle1.charge * particle2.charge / Math.pow(distance, 2);
     }
 
-    static calculateDirectionalForce(particle1, particle2, force) {
+    static calculateAcceleration(particle1, particle2, force) {
         //Calculate the direction of the force
         var dir = new Vector2(particle2.position.x - particle1.position.x, 
             particle2.position.y - particle1.position.y);
@@ -40,18 +40,18 @@ class ElectricFieldVisualizer {
         var norm = new Vector2(dir.x / mag, dir.y / mag);
 
         //Calculate the electric potential
-        var acceleration = new Vector2(force * norm.x, force * norm.y);
+        var acceleration = new Vector2(force * norm.x / particle1.mass, force * norm.y / particle1.mass);
 
         return acceleration;
     }
 
-    getForceAtPoint(point) {
-        let tempParticle = new Particle(1.60217662e-19, 1, 0, point); //Testparticle
+    getAccelerationAtPoint(point) {
+        let tempParticle = new Particle(1.60217662e-19, 9.10938356e-31, 0, point); //Testparticle
         let finalForce = new Vector2(0, 0);
 
         for (let i = 0; i < this.particles.length; i++) {
             let force = ElectricFieldVisualizer.calculateForce(tempParticle, this.particles[i]);
-            let forceDir = ElectricFieldVisualizer.calculateDirectionalForce(tempParticle, this.particles[i], force);
+            let forceDir = ElectricFieldVisualizer.calculateAcceleration(tempParticle, this.particles[i], force);
             finalForce = new Vector2(finalForce.x + forceDir.x, finalForce.y + forceDir.y);
         }
         return finalForce;
@@ -124,7 +124,7 @@ class ElectricFieldVisualizer {
                 }
                 for(let j = 0;j<initialPoints.length;j++) {
                     if(initialPoints[j] != undefined) {
-                        let force = this.getForceAtPoint(initialPoints[j]);
+                        let force = this.getAccelerationAtPoint(initialPoints[j]);
                         let radianAngle = force.getAngleRadians();
                         //If the charge is negative, calculate the lines backwards (invert the angle)
                         if(clonedArray[index].charge < 0) {
@@ -184,7 +184,7 @@ class ElectricFieldVisualizer {
         //Display Test Charge
         let testBody = new CircleRenderObject(this.testCharge.radius, this.testCharge.position, "#FF0000");
         testBody.addInteractionEvents(undefined, (function(e) {this.testCharge.position = e}).bind(this));
-        let acc = this.getForceAtPoint(testBody.position);
+        let acc = this.getAccelerationAtPoint(testBody.position);
         this.acceleration = acc;
         this.testAcc = acc.x / acc.y;
         this.angle = acc.getAngleRadians();
