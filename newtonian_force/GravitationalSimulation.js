@@ -1,3 +1,6 @@
+/**
+ * © 2021 Elia Schenker
+ */
 class GravitationalSimulation {
     //Newtons gravitational constant
     static gravitationalConstant = 6.67408e-11;
@@ -93,7 +96,7 @@ class GravitationalSimulation {
         this.physicsCalculationCount++;
         deltaT = this.simRuntimeRealtime / this.physicsCalculationCount; //Use average deltat as deltat
 
-        //89 8324
+        //Iterate through the bodies (Maximum bodies: 89 8324 due to limitations in the graphics engine)
         for(var i = 0;i<this.physicalBodies.length;i++) {
             var finalAcceleration = new Vector2(0, 0);
 

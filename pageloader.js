@@ -1,3 +1,6 @@
+/**
+ * © 2021 Elia Schenker
+ */
 function initPage() {
     document.getElementsByTagName("nav")[0].innerHTML = `
         <div class="navbar">

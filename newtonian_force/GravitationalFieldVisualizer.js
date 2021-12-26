@@ -1,3 +1,6 @@
+/**
+ * © 2021 Elia Schenker
+ */
 class GravitationalFieldVisualizer {
     constructor(renderer) {
         this.interval = setInterval(this.tick.bind(this), 0.01);
@@ -47,7 +50,7 @@ class GravitationalFieldVisualizer {
         averagePosY /= bodies.length;
 
         let centerPoint = new Vector2(averagePosX, averagePosY);
-        let step = Math.PI/ pointAmount
+        let step = Math.PI/ pointAmount;
 
         for (let i = 0; i < pointAmount; i++) {
             let radiansAngle = Math.PI / 2 + step * i - Math.PI / 2;

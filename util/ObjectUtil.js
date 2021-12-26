@@ -1,3 +1,6 @@
+/**
+ * © 2021 Elia Schenker
+ */
 class ObjectUtil {
     static clone(obj) {
         if (obj === null || typeof (obj) !== 'object' || 'isActiveClone' in obj)

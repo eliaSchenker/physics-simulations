@@ -1,3 +1,6 @@
+/**
+ * © 2021 Elia Schenker
+ */
 class DateUtil {
     static secondsToText(seconds) {
         // calculate (and subtract) whole days

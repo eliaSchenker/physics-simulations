@@ -1,3 +1,6 @@
+/**
+ * © 2021 Elia Schenker
+ */
 class MagneticSimulation {
     constructor(renderer) {
         this.magnets = [];

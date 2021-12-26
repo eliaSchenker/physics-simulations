@@ -1,3 +1,6 @@
+/**
+ * © 2021 Elia Schenker
+ */
 class SIUtil {
     static getMantisse(number) {
         return number.toExponential().split("e")[0];

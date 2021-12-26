@@ -1,3 +1,6 @@
+/**
+ * © 2021 Elia Schenker
+ */
 class Renderer {
     /**
      * Default Constructor of the Renderer

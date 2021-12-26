@@ -1,3 +1,6 @@
+/**
+ * © 2021 Elia Schenker
+ */
 class ColorUtil {
     /**
      * Interpolates between two colors (source: https://bl.ocks.org/espetro/bd7555f4363af4f5a81bb324eae76912)
