@@ -155,6 +155,10 @@ class Renderer {
         this.canvas.addEventListener("mousemove", this.onmousemove.bind(this));
         this.canvas.addEventListener("mouseup", this.onmouseup.bind(this));
         this.canvas.addEventListener("mouseout", this.onmouseout.bind(this));
+        this.canvas.addEventListener("touchstart", this.onmousedown.bind(this));
+        this.canvas.addEventListener("touchmove", this.onmousemove.bind(this));
+        this.canvas.addEventListener("touchend", this.onmouseup.bind(this));
+        this.canvas.addEventListener("touchcancel", this.onmouseout.bind(this));
     }
 
     /**
@@ -180,6 +184,15 @@ class Renderer {
         this.render_frame();
     }
 
+    getEventCoordinates(e) {
+        if(e instanceof TouchEvent) {
+            e.preventDefault();
+            return new Vector2(e.targetTouches[0].pageX, e.targetTouches[0].pageY);
+        }else {
+            return new Vector2(e.pageX, e.pageY);
+        }
+    }
+
     /**
      * On mouse down event
      * @param {*} e Eventdata
@@ -187,8 +200,11 @@ class Renderer {
     onmousedown(e) {
       this.isDragging = true;
       this.originalCameraPosition = this.cameraPosition;
-      this.originalX = e.pageX - this.canvas.offsetLeft;
-      this.originalY = e.pageY - this.canvas.offsetTop;
+
+      let coords = this.getEventCoordinates(e);
+      this.originalX = coords.x - this.canvas.offsetLeft;
+      this.originalY = coords.y - this.canvas.offsetTop;
+      
       this.checkUIClickEvents(this.originalX, this.originalY);
 
       //Get the object which is under the mouse and assign it to the currentDragObject
@@ -206,8 +222,9 @@ class Renderer {
     onmousemove(e) {
       if(this.isDragging && this.canDrag) {
         //Calculate position of the mouse on the canvas
-        var x = e.pageX - this.canvas.offsetLeft;
-        var y = e.pageY - this.canvas.offsetTop;
+        let coords = this.getEventCoordinates(e);
+        var x = coords.x - this.canvas.offsetLeft;
+        var y = coords.y - this.canvas.offsetTop;
 
         //Calculate the distance between the start of the drag and the current mouse position
         var distance1 = this.originalX - x;
@@ -263,13 +280,17 @@ class Renderer {
 
       if(this.currentDragObject != undefined) {
           if(this.currentDragObject.onMouseUpEvent != undefined) {
-              let x = e.pageX - this.canvas.offsetLeft;
-              let y = e.pageY - this.canvas.offsetTop;
-              this.currentDragObject.onMouseUpEvent(this.canvasToWorldPosition(new Vector2(x, y)));
+            let coords = this.getEventCoordinates(e);
+            let x = coords.x - this.canvas.offsetLeft;
+            let y = coords.y - this.canvas.offsetTop;
+
+            this.currentDragObject.onMouseUpEvent(this.canvasToWorldPosition(new Vector2(x, y)));
           }
           this.currentDragObject = undefined;
       }
     }
+
+    //Touch events
 
     /**
      * On mouse out event
