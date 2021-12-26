@@ -47,11 +47,24 @@ class GravitationalFieldVisualizer {
         averagePosY /= bodies.length;
 
         let centerPoint = new Vector2(averagePosX, averagePosY);
-        let step = 360 / pointAmount;
+        let step = Math.PI/ pointAmount
 
         for (let i = 0; i < pointAmount; i++) {
-            let radiansAngle = step * i * Math.PI / 180;
+            let radiansAngle = Math.PI / 2 + step * i - Math.PI / 2;
             let newPoint = centerPoint.moveAtAngle(radiansAngle, startDistance);
+            if(i == 0) {
+            this.renderer.toRenderObjects.push(new CircleRenderObject(1000000, newPoint))
+            }
+            initialPoints.push(newPoint);
+            result.push([newPoint]);
+        }
+
+        for (let i = 0; i < pointAmount; i++) {
+            let radiansAngle = Math.PI / 2 + step * i + Math.PI / 2;
+            let newPoint = centerPoint.moveAtAngle(radiansAngle, startDistance);
+            if(i == 0) {
+            this.renderer.toRenderObjects.push(new CircleRenderObject(1000000, newPoint))
+            }
             initialPoints.push(newPoint);
             result.push([newPoint]);
         }
@@ -100,47 +113,6 @@ class GravitationalFieldVisualizer {
                     }
                 }
             }
-        }
-        return result;
-    }
-
-    getFieldPoints(bodies, startDistance, xPointAmount=100, yPointAmount=100) {
-        let result = [];
-        
-        let averagePosX = 0;
-        let averagePosY = 0;
-        for (let i = 0; i < bodies.length; i++) {
-            averagePosX += bodies[i].position.x;
-            averagePosY += bodies[i].position.y;
-        }
-        averagePosX /= bodies.length;
-        averagePosY /= bodies.length;
-
-        startDistance  = parseInt(startDistance);
-
-        let gridStartPoint = new Vector2(averagePosX - startDistance, averagePosY - startDistance);
-        let gridEndPoint = new Vector2(averagePosX + startDistance, averagePosY + startDistance);
-
-        let xStep = (gridEndPoint.x - gridStartPoint.x) / xPointAmount;
-        let yStep = (gridEndPoint.y - gridStartPoint.y) / yPointAmount;
-
-        for (let y = 0; y < yPointAmount; y++) {
-            let row = [];
-            for (let x = 0; x < xPointAmount; x++) {
-                let point = new Vector2(gridStartPoint.x + x * xStep, gridStartPoint.y + y * yStep);
-                let inAnyBody = false;
-                for (let i = 0; i < bodies.length; i++) {
-                    let distance = point.distanceTo(bodies[i].position);
-                    if(distance <= bodies[i].radius) {
-                        inAnyBody = true;
-                        break;
-                    }
-                }
-                if(!inAnyBody) {
-                    row.push([point, this.getAccelerationAtPoint(point)]);
-                }
-            }
-            result.push(row);
         }
         return result;
     }
