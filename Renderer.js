@@ -184,6 +184,11 @@ class Renderer {
         this.render_frame();
     }
 
+    /**
+     * Return the coordinates of the Mouse/Touch Event
+     * @param {*} e 
+     * @returns 
+     */
     getEventCoordinates(e) {
         if(e instanceof TouchEvent) {
             e.preventDefault();
@@ -243,10 +248,20 @@ class Renderer {
       }
     }
 
+    /**
+     * Returns all the objects in the canvas which are under a certain mouse position
+     * @param {Number} mouseX The X Mouse Position
+     * @param {Number} mouseY The Y Mouse Position
+     * @returns 
+     */
     getObjectsUnderMouse(mouseX, mouseY) {
+        //Iterate through all the render objects
         for (let i = 0; i < this.toRenderObjects.length; i++) {
+            //If the the object has a click or a drag event check if the mouse in its collider
             if(this.toRenderObjects[i].onClickEvent != undefined || this.toRenderObjects[i].onDragEvent != undefined) {
+                //Get the collider by using the getCollisionRect function of the object
                 let collider = this.toRenderObjects[i].getCollisionRect(this.ctx, this);
+                //If the mouse position is in the collision rectangle return the renderObject
                 if(new Vector2(mouseX, mouseY).isPointInRectangle(collider)) {
                     return this.toRenderObjects[i];
                 }
@@ -255,6 +270,11 @@ class Renderer {
         
     }
 
+    /**
+     * Same Function as getObjectsUnderMouse but for UI Objects
+     * @param {Number} mouseX 
+     * @param {Number} mouseY 
+     */
     checkUIClickEvents(mouseX, mouseY) {
         for(var i = 0;i<this.toRenderUI.length;i++) {
             if(this.toRenderUI[i] instanceof UIButton) {

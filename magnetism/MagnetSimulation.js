@@ -2,6 +2,10 @@
  * © 2021 Elia Schenker
  */
 class MagneticSimulation {
+    /**
+     * Default Constructor of the MagneticSimulation
+     * @param {*} renderer The renderer object
+     */
     constructor(renderer) {
         this.magnets = [];
         this.renderer = renderer;
@@ -11,17 +15,27 @@ class MagneticSimulation {
         this.compassPosition = new Vector2(0, -0.025);
     }
 
+    /**
+     * Tick Function whicch is called every 100th of a second
+     */
     tick() {
         if(!this.paused) {
-           
+            this.physicsTick();
         }
         this.render();
     }
 
+    /**
+     * Adds a magnet to the simulation
+     * @param {Magnet} magnet The magnet object
+     */
     addMagnet(magnet) {
         this.magnets.push(magnet);
     }
 
+    /**
+     * Destroys the simulation by clearing the interval
+     */
     destroy() {
         clearInterval(this.interval);
     }
@@ -53,6 +67,11 @@ class MagneticSimulation {
         return new Vector2(force * norm.x, force * norm.y);
     }
 
+    /**
+     * Returns the force by the magnets on a specific point
+     * @param {Vector2} point The point
+     * @returns The force vector
+     */
     getForceAtPoint(point) {
         let testMagnet = new Magnet(point, 0, 0, 0, 1, 1);
         let totalForce = new Vector2(0, 0);
@@ -139,6 +158,9 @@ class MagneticSimulation {
         return resultPoints.concat(reverseResultPoints);
     }
 
+    /**
+     * Physics Tick
+     */
     physicsTick() {
         var currentTickStart = new Date(); 
         
@@ -157,13 +179,15 @@ class MagneticSimulation {
 
                     let avgForce = new Vector2((northNorthForce.x + northSouthForce.x + southNorthForce.x + southSouthForce.x) / 4, (northNorthForce.y + northSouthForce.y + southNorthForce.y + southSouthForce.y) / 4);
                     finalForce = new Vector2(finalForce.x + avgForce.x, finalForce.y + avgForce.y);
-
-                    this.renderer.toRenderObjects.push(new ArrowRenderObject(this.magnets[i].getNorthPolePoint(), this.magnets[i].getNorthPolePoint().moveAtAngle(northNorthForce.getAngleRadians(), 0.025)));
+                    
+                    //Debug Code which renders the direction of the force towards another magnet
+                    /*this.renderer.toRenderObjects.push(new ArrowRenderObject(this.magnets[i].getNorthPolePoint(), this.magnets[i].getNorthPolePoint().moveAtAngle(northNorthForce.getAngleRadians(), 0.025)));
                     this.renderer.toRenderObjects.push(new ArrowRenderObject(this.magnets[i].getNorthPolePoint(), this.magnets[i].getNorthPolePoint().moveAtAngle(northSouthForce.getAngleRadians(), 0.025)));
                     this.renderer.toRenderObjects.push(new ArrowRenderObject(this.magnets[i].getSouthPolePoint(), this.magnets[i].getSouthPolePoint().moveAtAngle(southNorthForce.getAngleRadians(), 0.025)));
-                    this.renderer.toRenderObjects.push(new ArrowRenderObject(this.magnets[i].getSouthPolePoint(), this.magnets[i].getSouthPolePoint().moveAtAngle(southSouthForce.getAngleRadians(), 0.025)));
+                    this.renderer.toRenderObjects.push(new ArrowRenderObject(this.magnets[i].getSouthPolePoint(), this.magnets[i].getSouthPolePoint().moveAtAngle(southSouthForce.getAngleRadians(), 0.025)));*/
                 }
             }
+            //Apply the force, update the position and apply friction
             this.magnets[i].applyForceToMagnet(finalForce, deltaT);
             this.magnets[i].updatePosition(deltaT);
             this.magnets[i].applyFriction();
@@ -171,11 +195,12 @@ class MagneticSimulation {
         this.lastTickEnd = new Date();
     }
 
+    /**
+     * Render the objects
+     */
     render() {
         this.renderer.reset_render_objects();
-        if(!this.paused) {
-        this.physicsTick();
-        }
+
         for (let i = 0; i < this.magnets.length; i++) {
             let magnetPoints = this.magnets[i].getCornerPoints();
             let topMiddlePoint = new Vector2((magnetPoints[0].x + magnetPoints[1].x) / 2, (magnetPoints[0].y + magnetPoints[1].y) / 2);
@@ -187,10 +212,12 @@ class MagneticSimulation {
             //Render South Pole of the Magnet
             let southPolePoints = [magnetPoints[1], topMiddlePoint, bottomMiddlePoint, magnetPoints[3], magnetPoints[1]];
             
+            //Render the two sides of the magnet
             this.renderer.toRenderObjects.push(new PolygonRenderObject(northPolePoints, true, "#eb4034"));
             this.renderer.toRenderObjects.push(new PolygonRenderObject(southPolePoints, true, "#0acc17"));
             let borderObject = new PolygonRenderObject([magnetPoints[0], magnetPoints[1], magnetPoints[3], magnetPoints[2]]);
             let currentIndex = i;
+            //Drag events for the magnets
             borderObject.addInteractionEvents(undefined, (
                 function(e) {
                     this.magnets[currentIndex].centerPosition = e;
@@ -200,10 +227,12 @@ class MagneticSimulation {
                 }).bind(this));
             this.renderer.toRenderObjects.push(borderObject);
 
+            //Draw the pole characters (N/S)
             this.renderer.toRenderObjects.push(new TextRenderObject("20px Arial", "N", this.magnets[i].getNorthPolePoint(), "center"));
             this.renderer.toRenderObjects.push(new TextRenderObject("20px Arial", "S", this.magnets[i].getSouthPolePoint(), "center"));
         }
         for (let i = 0; i < this.magnets.length; i++) {
+            //Calculate the magnetic field lines and draw them
             let lines = this.getMagneticFieldLines(this.magnets[i], 20, 0.0008, 2000);
             for (let j = 0; j < lines.length; j++) {
                 for (let k = 0; k < lines[j].length - 1; k++) {
@@ -294,16 +323,32 @@ class Magnet {
         this.fixPosition = false;
     }
 
+    /**
+     * Returns the north pole point of the magnet
+     * @returns The north pole point
+     */
     getNorthPolePoint() {
+        //Subtract a forth of the width from the centerPosition
         let point = new Vector2(this.centerPosition.x - this.width / 4, this.centerPosition.y);
+        //And rotate it around the centerPosition using the magnets rotation
         return point.rotateAroundPoint(this.centerPosition, this.rotation);
     }
 
+    /**
+     * Returns the south pole point of the magnet
+     * @returns The south pole point
+     */
     getSouthPolePoint() {
+        //Add a forth of the width from the centerPosition
         let point = new Vector2(this.centerPosition.x + this.width / 4, this.centerPosition.y);
+        //And rotate it around the centerPosition using the magnets rotation
         return point.rotateAroundPoint(this.centerPosition, this.rotation); 
     }
 
+    /**
+     * Returns the corner points of the magnet
+     * @returns The corner points
+     */
     getCornerPoints() {
         let leftTopCornerPoint = new Vector2(this.centerPosition.x - this.width / 2, this.centerPosition.y + this.height / 2);
         let rightTopCornerPoint = new Vector2(this.centerPosition.x + this.width / 2, this.centerPosition.y + this.height / 2);
@@ -315,6 +360,11 @@ class Magnet {
                 rightBottomCornerPoint.rotateAroundPoint(this.centerPosition, this.rotation)];
     }
 
+    /**
+     * Temporary function which applies a force to the entire magnet (should be replaced by applying the force to each individual pole)
+     * @param {Vector2} force The force to be applied
+     * @param {Number} deltaT The time difference
+     */
     applyForceToMagnet(force, deltaT) {
         if(!this.fixPosition) {
             this.velocity = new Vector2(this.velocity.x + force.x * deltaT, 
@@ -322,6 +372,10 @@ class Magnet {
         }
     }
 
+    /**
+     * Temporary function which updates the position of the magnet
+     * @param {*} deltaT The time difference
+     */
     updatePosition(deltaT) {
         if(!this.fixPosition) {
             this.centerPosition = new Vector2(this.centerPosition.x + this.velocity.x * deltaT,
@@ -329,16 +383,25 @@ class Magnet {
         }
     }
     
+    /**
+     * Applies friction to the magnet (temporary)
+     */
     applyFriction() {
         if(!this.fixPosition) {
             this.velocity = new Vector2(this.velocity.x * 0.99, this.velocity.y * 0.99);
         }
     }
 
+    /**
+     * TODO
+     */
     applyForceToNorthPole() {
 
     }
 
+    /**
+     * TODO
+     */
     applyForceToSouthPole() {
 
     }
