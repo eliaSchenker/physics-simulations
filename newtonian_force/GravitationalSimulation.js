@@ -39,6 +39,9 @@ class GravitationalSimulation {
         this.initUI();
     }
 
+    /**
+     * Initializes the UI components used for the simulation
+     */
     initUI() {
         this.renderer.toRenderUI.push(new UIText(true, new Vector2(10, 10), "", "20px Arial", "left", "bottom"));
         this.renderer.toRenderUI.push(new UIButton(true, new Vector2(10, 10), "", "20px Arial", (function() {this.toggleSimPause(); }).bind(this), "left", "top"))
@@ -297,20 +300,31 @@ class GravitationalSimulation {
             }
         }
 
+        //Update various UI ocmponents
         this.renderer.toRenderUI[0].text = "Simulation has been running for " + DateUtil.secondsToText(Math.round(this.simRuntimeSimTime));
         this.renderer.toRenderUI[1].text = this.paused ? "Play" : "Pause";
 
         this.renderer.render_frame();
     }
 
+    /**
+     * Toggles the paused state
+     */
     toggleSimPause() {
-        if(this.paused && !this.isEditModeActive) {
+        if(this.paused) {
+            //If the user wishes to play the simulation while edit mode is active, deactivate the edit mode
+            if(this.isEditModeActive) {
+                this.isEditModeActive = false;
+            }
             this.playSim();
         }else {
             this.pauseSim();
         }
     }
     
+    /**
+     * Toggles the edit mode
+     */
     toggleEditMode() {
         if(this.isEditModeActive) {
             this.isEditModeActive = false;
@@ -321,10 +335,16 @@ class GravitationalSimulation {
         }
     }
 
+    /**
+     * Pauses the simulation
+     */
     pauseSim() {
         this.paused = true;
     }
 
+    /**
+     * Plays the simulation
+     */
     playSim() {
         this.paused = false;
     }
