@@ -3,6 +3,10 @@
  */
 class DateUtil {
     static secondsToText(seconds) {
+        // calculate (and subtract) whole years
+        var years = Math.floor(seconds / 3.156e+7);
+        seconds -= years * 3.156e+7;
+
         // calculate (and subtract) whole days
         var days = Math.floor(seconds / 86400);
         seconds -= days * 86400;
@@ -14,6 +18,15 @@ class DateUtil {
         // calculate (and subtract) whole minutes
         var minutes = Math.floor(seconds / 60) % 60;
         seconds -= minutes * 60;
+
+        var yearsText = "";
+        if(years != 0) {
+            if(years != 1) {
+                yearsText = years + " years ";
+            }else {
+                yearsText = years + " year ";
+            }
+        }
 
         var daysText = "";
         if(days != 0) {
@@ -51,6 +64,6 @@ class DateUtil {
             }
         }
 
-        return daysText + hoursText + minutesText + secondsText;
+        return yearsText + daysText + hoursText + minutesText + secondsText;
     }
 }
