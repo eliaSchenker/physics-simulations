@@ -10,7 +10,7 @@ class GravitationalSimulation {
      * @param {Renderer} renderer the renderer object
      * @param {Number} physicsTickSpeed the tick speed (time between ticks)
      */
-    constructor(renderer, physicsTickSpeed=0.01) {
+    constructor(renderer, physicsTickSpeed=0.01, enableEditing=false) {
         this.renderer = renderer;
         this.physicalBodies = [];
         
@@ -23,6 +23,7 @@ class GravitationalSimulation {
 
         //Setup trails
         this.displayTrails = true;
+        this.enableEditing = enableEditing;
         this.trailCounter = 0;
         this.trailPointLimit = 1000;
 
@@ -45,7 +46,9 @@ class GravitationalSimulation {
     initUI() {
         this.renderer.toRenderUI.push(new UIText(true, new Vector2(10, 10), "", "20px Arial", "left", "bottom"));
         this.renderer.toRenderUI.push(new UIButton(true, new Vector2(10, 10), "", "20px Arial", (function() {this.toggleSimPause(); }).bind(this), "left", "top"))
-        this.renderer.toRenderUI.push(new UIButton(true, new Vector2(100, 10), "Edit", "20px Arial", (function() {this.toggleEditMode(); }).bind(this), "left", "top"))
+        if(this.enableEditing) {
+            this.renderer.toRenderUI.push(new UIButton(true, new Vector2(100, 10), "Edit", "20px Arial", (function() {this.toggleEditMode(); }).bind(this), "left", "top"))
+        }
     }
 
     /**
@@ -105,13 +108,15 @@ class GravitationalSimulation {
 
             for(var j = 0;j<this.physicalBodies.length;j++) {
                 //Don't calculate the influence the body has on itself
-                if(i != j) {
+                if(i != j && !this.physicalBodies[j].ignoreForCalculation) {
                     //Calculate the force between the two bodies
                     var force = GravitationalSimulation.calculateForce(this.physicalBodies[i], this.physicalBodies[j]);
                     //Calculate the acceleration using the force
                     var newAcceleration = GravitationalSimulation.calculateAcceleration(this.physicalBodies[i], this.physicalBodies[j], force);
                     //Add the new acceleration to the final acceleration
-                    finalAcceleration = new Vector2(finalAcceleration.x + newAcceleration.x, finalAcceleration.y + newAcceleration.y);
+                    if(!isNaN(newAcceleration.x) && !isNaN(newAcceleration.y)) {
+                        finalAcceleration = new Vector2(finalAcceleration.x + newAcceleration.x, finalAcceleration.y + newAcceleration.y);
+                    }
                 }
             }
 
@@ -273,7 +278,9 @@ class GravitationalSimulation {
 
                 this.renderer.toRenderObjects.push(arrowObject);
             }else {
-                this.renderer.toRenderUI[2].color = "#D3D3D3";
+                if(this.enableEditing) {
+                    this.renderer.toRenderUI[2].color = "#D3D3D3";
+                }
             }
 
             this.renderer.toRenderObjects.push(body);
@@ -362,14 +369,16 @@ class PhysicalBody {
      * @param {Vector2} initialVelocity Velocity of the body (vector)
      * @param {String} name Name of the body
      * @param {Boolean} fixPosition Should the position of the body be fixed (not affected by other bodies)
+     * @param {Boolean} ignoreForCalculation Will the body be ignored for calculation of the other bodies
      */
-    constructor(mass, radius, initialPosition, initialVelocity, name, fixPosition=false) {
+    constructor(mass, radius, initialPosition, initialVelocity, name, fixPosition=false, ignoreForCalculation=false) {
         this.mass = mass;
         this.radius = radius;
         this.position = initialPosition;
         this.velocity = initialVelocity;
         this.name = name;
         this.fixPosition = fixPosition;
+        this.ignoreForCalculation = ignoreForCalculation;
         this.trailPoints = [];
     }
 
