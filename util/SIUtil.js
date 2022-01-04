@@ -17,4 +17,12 @@ class SIUtil {
     static metersToAU(meters) {
         return meters / 1.496e+11;
     }
+
+    static solarMassToKg(solarMasses) {
+        return solarMasses * 1.98847e30;
+    }
+
+    static kgToSolarMasses(kg) {
+        return kg / 9.223e18;
+    }
 }
