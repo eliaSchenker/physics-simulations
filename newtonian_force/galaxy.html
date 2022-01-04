@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="../styles.css" rel="stylesheet">
+    <title>Galaxy Simulation</title>
+</head>
+<body onload="resetSimulation();initPage();">
+    <nav></nav>
+    <h1>Galaxy Simulation</h1>
+    <p>Hint: The radii of the stars are increased to increase visibility of the objects.</p>
+    <canvas width="750" height="750" id="canvas"></canvas>
+    <div id="controlDiv">
+        <label for="amountInput" id="amountInputLabel">Amount of bodies:</label><br>
+        <input type="range" min=100 max=4500 id="amountInput" value=1300 onchange="resetSimulation();"><br>
+        <label for="fastCalculation">Fast Calculation (bodies are only affected by the center black hole):</label>
+        <input type="checkbox" id="fastCalculation" onchange="resetSimulation();"><br>
+        <label for="displayTrails">Display body trails:</label>
+        <input type="checkbox" id="displayTrails" onchange="sim.displayTrails = this.checked;"><br>
+        <button onclick="sim.physicalBodies.shift();">Remove Galactic Center</button><br>
+        <button onclick="renderer.zoomAmount = 4;">Close view</button><br>
+        <button onclick="renderer.zoomAmount = 20;">Far view</button>
+    </div>
+</body>
+<script src="GravitationalSimulation.js" type="text/javascript"></script>
+<script src="../Renderer.js" type="text/javascript"></script>
+<script src="../util/DateUtil.js" type="text/javascript"></script>
+<script src="../util/SIUtil.js" type="text/javascript"></script>
+<script src="../util/ObjectUtil.js" type="text/javascript"></script>
+<script src="../pageloader.js" type="text/javascript"></script>
+<script>
+    var renderer;
+    var sim;
+    function generateRandomNumber(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+    function resetSimulation() {
+        if(sim != undefined) {
+            sim.destroy();
+            sim = undefined;
+        }
+        if(renderer != undefined) {
+            renderer.destroy();
+            renderer = undefined;
+        }
+        //Update various inputs
+        let bodyAmount = document.getElementById("amountInput").value;
+        document.getElementById("amountInputLabel").innerText = "Amount of bodies (" + bodyAmount + "):";
+        let fastCalculation = document.getElementById("fastCalculation").checked;
+        let displayTrails = document.getElementById("displayTrails").checked;
+
+        var canvas = document.getElementById("canvas");
+        renderer = new Renderer(canvas, 5e20 * 1,  5e20 * 1);
+        renderer.zoomAmount = 4;
+        var blackholecenter = new PhysicalBody(SIUtil.solarMassToKg(4300000), 5e20 / 10000, new Vector2(0, 0), new Vector2(0, 0), "Sagittarius A", true)
+        //var blackholecenter2 = new PhysicalBody(SIUtil.solarMassToKg(4300000), 5e20 / 15, new Vector2(-7e20 , 0), new Vector2(0, 0), "Sagittarius B", true)
+        let bodies = [];
+        sim = new GravitationalSimulation(renderer, 10);
+        for (let i = 0; i < bodyAmount; i++) {
+            let bodyPosition = blackholecenter.position.moveAtAngle(generateRandomNumber(0, 360), generateRandomNumber(2e20, 5e20));
+            let bodyMass = SIUtil.solarMassToKg(generateRandomNumber(0.5, 2));
+            let body = new PhysicalBody(bodyMass, 5e20 / 100, bodyPosition, new Vector2(0, 0), "", false, fastCalculation);
+            let distance = body.position.distanceTo(blackholecenter.position);
+            let force = GravitationalSimulation.calculateForce(body, blackholecenter);
+            let acc = GravitationalSimulation.calculateAcceleration(body, blackholecenter, force);
+            let accMagnitude = acc.getMagnitude();
+            let velocityMagnitude = Math.sqrt(accMagnitude * distance) * generateRandomNumber(0.8, 1.2);
+
+            let angle = body.position.angleTo(blackholecenter.position) + Math.PI / 2;
+            let x = Math.cos(angle) * velocityMagnitude;
+            let y = Math.sin(angle) * velocityMagnitude;
+
+            body.velocity = new Vector2(x, y);
+            // body.velocity = new Vector2(Math.sqrt(acc.x * ))
+            bodies.push(body);
+        }
+        sim.addBody(blackholecenter);
+        //sim.addBody(blackholecenter2);
+        sim.displayTrails = displayTrails;
+        sim.timeWarp = 3.1536E+17;
+        for (let i = 0; i < bodies.length; i++) {
+            sim.addBody(bodies[i]);     
+        }
+        sim.trailPointLimit = 10;
+    }
+</script>
+</html>

@@ -12,6 +12,7 @@ function initPage() {
             <div class="dropdown-content">
                 <a href="https://eliaschenker.com/physics-simulations/newtonian_force/MoonAndEarth.html">Moon and earth (Centripetal force)</a>
                 <a href="https://eliaschenker.com/physics-simulations/newtonian_force/solarsystem.html">Solar system</a>
+                <a href="https://eliaschenker.com/physics-simulations/newtonian_force/galaxy.html">Galaxy</a>
                 <a href="https://eliaschenker.com/physics-simulations/newtonian_force/gravitationalfield.html">Gravitational Field Visualization</a>
             </div>
         </div>
