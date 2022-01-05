@@ -10,7 +10,7 @@ class GravitationalSimulation {
      * @param {Renderer} renderer the renderer object
      * @param {Number} physicsTickSpeed the tick speed (time between ticks)
      */
-    constructor(renderer, physicsTickSpeed=0.01, enableEditing=false) {
+    constructor(renderer, physicsTickSpeed=0.01, enableEditing=true) {
         this.renderer = renderer;
         this.physicalBodies = [];
         

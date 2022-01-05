@@ -57,7 +57,7 @@
         var blackholecenter = new PhysicalBody(SIUtil.solarMassToKg(4300000), 5e20 / 10000, new Vector2(0, 0), new Vector2(0, 0), "Sagittarius A", true)
         //var blackholecenter2 = new PhysicalBody(SIUtil.solarMassToKg(4300000), 5e20 / 15, new Vector2(-7e20 , 0), new Vector2(0, 0), "Sagittarius B", true)
         let bodies = [];
-        sim = new GravitationalSimulation(renderer, 10);
+        sim = new GravitationalSimulation(renderer, 10, false);
         for (let i = 0; i < bodyAmount; i++) {
             let bodyPosition = blackholecenter.position.moveAtAngle(generateRandomNumber(0, 360), generateRandomNumber(2e20, 5e20));
             let bodyMass = SIUtil.solarMassToKg(generateRandomNumber(0.5, 2));
