@@ -59,7 +59,7 @@
         let bodies = [];
         sim = new GravitationalSimulation(renderer, 10, false);
         for (let i = 0; i < bodyAmount; i++) {
-            let bodyPosition = blackholecenter.position.moveAtAngle(generateRandomNumber(0, 360), generateRandomNumber(2e20, 5e20));
+            let bodyPosition = blackholecenter.position.moveAtAngle(generateRandomNumber(0, Math.PI * 2), generateRandomNumber(2e20, 5e20));
             let bodyMass = SIUtil.solarMassToKg(generateRandomNumber(0.5, 2));
             let body = new PhysicalBody(bodyMass, 5e20 / 100, bodyPosition, new Vector2(0, 0), "", false, fastCalculation);
             let distance = body.position.distanceTo(blackholecenter.position);
