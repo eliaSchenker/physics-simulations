@@ -21,7 +21,9 @@ class Renderer {
         this.isDragging = true;
         this.zoomAmount = 1;
         this.canDrag = true;
+        this.debug_draw_colliders = false;
         this.lastFrameDraw = new Date();
+        this.globalMouseUpEvent = undefined;
         this.prepareDragEvent();
         this.prepareScrollEvent();
     }
@@ -50,6 +52,11 @@ class Renderer {
         //Draw the objects
         for(let i = 0;i<this.toRenderObjects.length;i++) {
             this.toRenderObjects[i].draw(this.ctx, this);
+            if(this.debug_draw_colliders) {
+                let collisionRect =  this.toRenderObjects[i].getCollisionRect(this.ctx, this);
+                collisionRect = [this.canvasToWorldPosition(collisionRect[0]), this.canvasToWorldPosition(collisionRect[1]), this.canvasToWorldPosition(collisionRect[2]), this.canvasToWorldPosition(collisionRect[3])]
+                new PolygonRenderObject(collisionRect, false, "#FF0000").draw(this.ctx, this);
+            }
         }
 
         //Draw the UI
@@ -258,7 +265,7 @@ class Renderer {
         //Iterate through all the render objects
         for (let i = 0; i < this.toRenderObjects.length; i++) {
             //If the the object has a click or a drag event check if the mouse in its collider
-            if(this.toRenderObjects[i].onClickEvent != undefined || this.toRenderObjects[i].onDragEvent != undefined) {
+            if(this.toRenderObjects[i].onClickEvent != undefined || this.toRenderObjects[i].onDragEvent != undefined || this.toRenderObjects[i].onMouseOverUpEvent != undefined) {
                 //Get the collider by using the getCollisionRect function of the object
                 let collider = this.toRenderObjects[i].getCollisionRect(this.ctx, this);
                 //If the mouse position is in the collision rectangle return the renderObject
@@ -298,15 +305,23 @@ class Renderer {
     onmouseup(e) {
       this.isDragging = false;
 
+      let coords = this.getEventCoordinates(e);
+      let x = coords.x - this.canvas.offsetLeft;
+      let y = coords.y - this.canvas.offsetTop;
       if(this.currentDragObject != undefined) {
-          if(this.currentDragObject.onMouseUpEvent != undefined) {
-            let coords = this.getEventCoordinates(e);
-            let x = coords.x - this.canvas.offsetLeft;
-            let y = coords.y - this.canvas.offsetTop;
-
+        if(this.currentDragObject.onMouseUpEvent != undefined) {
             this.currentDragObject.onMouseUpEvent(this.canvasToWorldPosition(new Vector2(x, y)));
-          }
-          this.currentDragObject = undefined;
+        }
+        this.currentDragObject = undefined;
+      }
+      
+      let mouseUpOverEventObject = this.getObjectsUnderMouse(x, y);
+      if(mouseUpOverEventObject != undefined && mouseUpOverEventObject.onMouseOverUpEvent != undefined) {
+          mouseUpOverEventObject.onMouseOverUpEvent(new Vector2(x, y));
+      }
+
+      if(this.globalMouseUpEvent != undefined) {
+        this.globalMouseUpEvent();
       }
     }
 
@@ -353,10 +368,11 @@ class RenderObject {
         this.color = color;
     }
 
-    addInteractionEvents(onClickEvent=undefined, onDragEvent=undefined, onMouseUpEvent=undefined) {
+    addInteractionEvents(onClickEvent=undefined, onDragEvent=undefined, onMouseUpEvent=undefined, onMouseOverUpEvent=undefined) {
         this.onClickEvent = onClickEvent;
         this.onDragEvent = onDragEvent;
         this.onMouseUpEvent = onMouseUpEvent;
+        this.onMouseOverUpEvent = onMouseOverUpEvent;
     }
 }
 
@@ -573,6 +589,17 @@ class LineRenderObject extends RenderObject {
         ctx.lineTo(canvasEndPosition.x, canvasEndPosition.y);
         ctx.stroke();
         ctx.lineWidth = originalLineWidth;
+    }
+
+    getCollisionRect(ctx, rendererReference) {
+        let bottomLeftCollider = this.position.moveAtAngle(Math.PI / 2, this.lineWidth / 2);
+        let bottomRightCollider = this.position.moveAtAngle(-Math.PI / 2, this.lineWidth / 2);
+        let topLeftCollider = this.endPosition.moveAtAngle(Math.PI / 2, this.lineWidth / 2);
+        let topRightCollider = this.endPosition.moveAtAngle(-Math.PI / 2, this.lineWidth / 2);
+        return [rendererReference.worldToCanvasPosition(bottomLeftCollider), 
+            rendererReference.worldToCanvasPosition(bottomRightCollider),
+            rendererReference.worldToCanvasPosition(topRightCollider),
+            rendererReference.worldToCanvasPosition(topLeftCollider)];
     }
 }
 
