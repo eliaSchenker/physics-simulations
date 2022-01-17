@@ -13,11 +13,9 @@
     <canvas width="750" height="750" id="canvas"></canvas>
     <div id="controlDiv">
         <b>Effective Resistance:</b>
-        <div class="mathdiv">
+        <div id="resEffMath">
             <math>
-                <mrow>
-                    
-                </mrow>
+          
             </math>
         </div>
     </div>
@@ -50,7 +48,18 @@
         let canvas = document.getElementById("canvas");
         renderer = new Renderer(canvas, 30, 30);
         renderer.zoomAmount = 1;
-        sim = new ElectricalCircuitVisualizer(renderer);
+        sim = new ElectricalCircuitVisualizer(renderer, this.updateUI);
+    }
+
+    function updateUI() {
+        
+        let effRes = sim.calculateEffectiveResistance();
+        if(effRes != undefined) {
+            document.getElementById("resEffMath").innerHTML = "<math><msub><mi>R</mi><mi>eff</mi></msub><mo>=</mo>" + sim.generateRefMathML(0) + "<mo>=</mo><mn>" + effRes + "Ω</mn></math>";
+        }else {
+            document.getElementById("resEffMath").innerHTML = "<math><msub><mi>R</mi><mi>eff</mi></msub><mo>=</mo><mi>Berechnung nicht möglich</mi></math>"
+        }
+        MathJax.typesetPromise()
     }
 </script>
 </html>

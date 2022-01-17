@@ -1,9 +1,11 @@
 class ElectricalCircuitVisualizer {
-    constructor(renderer) {
+    constructor(renderer, updateEvent) {
         this.interval = setInterval(this.tick.bind(this), 0.01);
         this.renderer = renderer;
-        this.startPoint = new CircuitStartPoint(new Vector2(-5, 5));
-        this.endPoint = new CircuitEndPoint(new Vector2(20, 0.5));
+        this.renderer.cameraPosition = new Vector2(3.16, 0.08);
+        this.startPoint = new CircuitStartPoint(new Vector2(-10, 4.85));
+        this.endPoint = new CircuitEndPoint(new Vector2(-10, -5));
+        /*
         let r1 = new Resistor(new Vector2(1.5, 7.5), 200);
         let r2 = new Resistor(new Vector2(10, 5), 100);
         let r3 = new Resistor(new Vector2(10, 0), 125);
@@ -18,7 +20,28 @@ class ElectricalCircuitVisualizer {
         r3.addConnection(this.endPoint);
         r4.addConnection(this.endPoint);
         r5.addConnection(this.endPoint);
-        this.resistors = [r1, r2, r3, r4, r5];
+        this.resistors = [r1, r2, r3, r4, r5];*/
+
+        let r1 = new Resistor(new Vector2(-4.4, 5), 2);
+        let r2 = new Resistor(new Vector2(0.5, 0.75), 2, -Math.PI / 2);
+        let r3 = new Resistor(new Vector2(4, 5), 2);
+        let r4 = new Resistor(new Vector2(8, 0.75), 3, -Math.PI / 2);
+        let r5 = new Resistor(new Vector2(12, 5), 3);
+        let r6 = new Resistor(new Vector2(16, 0.75), 3, -Math.PI / 2);
+
+        this.startPoint.addConnection(r1);
+        r1.addConnection(r2);
+        r1.addConnection(r3);
+        r2.addConnection(this.endPoint);
+        r3.addConnection(r4);
+        r3.addConnection(r5);
+        r4.addConnection(this.endPoint);
+        r5.addConnection(r6);
+        r6.addConnection(this.endPoint);
+
+        this.resistors = [r1, r2, r3, r4, r5, r6];
+
+        this.updateEvent = updateEvent;
 
         this.isConnecting = false;
         //testResistor.addConnection(testResistor2);
@@ -104,7 +127,7 @@ class ElectricalCircuitVisualizer {
             }else if(this.currentMode == "edit") {
                 resistorDrawObject.addInteractionEvents((function() { this.resistors[tempIndex].value = parseInt(prompt("Bitte den Widerstand in Ohm angeben:", ""));renderer.isDragging = false;}).bind(this));
             }else if(this.currentMode == "rotate") {
-                resistorDrawObject.addInteractionEvents((function() { this.resistors[tempIndex].rotation += this.resistors[tempIndex].rotation == Math.PI / 2 ? -Math.PI / 2 : Math.PI / 2}).bind(this));
+                resistorDrawObject.addInteractionEvents((function() { this.resistors[tempIndex].rotation += this.resistors[tempIndex].rotation == -Math.PI / 2 ? Math.PI / 2 : -Math.PI / 2}).bind(this));
             }else if(this.currentMode == "delete") {
                 resistorDrawObject.addInteractionEvents((function() { this.deleteResistor(tempIndex)}).bind(this));
             }else if(this.currentMode == "connect") {
@@ -143,7 +166,12 @@ class ElectricalCircuitVisualizer {
         this.rotateButton.color = this.currentMode == "rotate" ? "#3d87ff" : "#D3D3D3";
         this.deleteButton.color = this.currentMode == "delete" ? "#3d87ff" : "#D3D3D3";
 
-        this.reff = this.calculateEffectiveResistance();
+        //this.reff = this.calculateEffectiveResistance();
+        this.updateEvent();
+
+
+        //Calculate reff math
+        this.reffMath = "<math><mrow><m"
 
         this.renderer.render_frame();
     }
@@ -275,8 +303,84 @@ class ElectricalCircuitVisualizer {
         while(dataStructure.connections[0].connections[0].type != "end" || dataStructure.connections.length != 1) {
             this.iteratethroughChildren(dataStructure);
         }
-        
+
+        this.changesMade.reverse();
+
         return dataStructure.connections[0].value;
+    }
+
+    generateRefMathML(layer) {
+        if(this.changesMade.length == 0) {
+            return undefined;
+        }
+        let id1 = this.changesMade[layer].object1.id;
+        let id2 = this.changesMade[layer].object2.id;
+        let id1FoundLayer = -1;
+        let id2FoundLayer = -1;
+        for (let i = layer + 1; i < this.changesMade.length; i++) {
+            if(id1FoundLayer == -1 && (this.changesMade[i].object1.id == id1 || this.changesMade[i].object2.id == id1)) {
+                id1FoundLayer = i;
+            }
+            if(id2FoundLayer == -1 && (this.changesMade[i].object1.id == id2 || this.changesMade[i].object2.id == id2)) {
+                id2FoundLayer = i;
+            }
+        }
+        
+        let object1Value = id1FoundLayer == -1 ? this.changesMade[layer].object1.value + "Ω" : this.generateRefMathML(id1FoundLayer);
+        let object2Value = id2FoundLayer == -1 ? this.changesMade[layer].object2.value+ "Ω" : this.generateRefMathML(id2FoundLayer);
+
+        if(this.changesMade[layer].type == 's') {
+            return "<mn>" + object1Value + "</mn><mo>+</mo><mn>" + object2Value + "</mn>";
+        }else {
+            return "<mfrac><mn>1</mn><mi><mfrac><mn>1</mn><mi>" + object1Value + "</mi></mfrac><mo>+</mo>" + 
+            "<mfrac><mn>1</mn><mi>" + object2Value + "</mi></mfrac></mi></mfrac>";
+        }
+    }
+
+    calculatePartialAmperageVoltage(layer=0, voltage=100) {
+        if(this.changesMade.length == 0) {
+            return undefined;
+        }
+        let item = this.changesMade[layer];
+        let id1 = item.object1.id;
+        let id2 = item.object2.id;
+
+        let amp1;
+        let amp2;
+        let volt1;
+        let volt2;
+        if(item.type == 's') {
+            amp1 = amp2 = voltage / (item.object1.value + item.object2.value);
+            volt1 = item.object1.value * amp1;
+            volt2 = item.object2.value * amp2;
+        }else {
+            volt1 = volt2 = voltage;
+            amp1 = volt1 / item.object1.value;
+            amp2 = volt2 / item.object2.value;
+        }
+
+        item.object1.amp = amp1;
+        item.object1.volt = volt1;
+        item.object2.amp = amp2;
+        item.object2.volt = volt2;
+
+        let id1FoundLayer = -1;
+        let id2FoundLayer = -1;
+        for (let i = layer + 1; i < this.changesMade.length; i++) {
+            if(id1FoundLayer == -1 && (this.changesMade[i].object1.id == id1 || this.changesMade[i].object2.id == id1)) {
+                id1FoundLayer = i;
+            }
+            if(id2FoundLayer == -1 && (this.changesMade[i].object1.id == id2 || this.changesMade[i].object2.id == id2)) {
+                id2FoundLayer = i;
+            }
+        }
+
+        if(id1FoundLayer != -1) {
+            this.calculatePartialAmperageVoltage(id1FoundLayer, volt1);
+        }
+        if(id2FoundLayer != -1) {
+            this.calculatePartialAmperageVoltage(id2FoundLayer, volt2);
+        }
     }
 
     hasInvalidConnections(point) {
