@@ -197,7 +197,7 @@ class Renderer {
      * @returns 
      */
     getEventCoordinates(e) {
-        if(e instanceof TouchEvent) {
+        if(window.TouchEvent && e instanceof TouchEvent) {
             e.preventDefault();
             return new Vector2(e.targetTouches[0].pageX, e.targetTouches[0].pageY);
         }else {
