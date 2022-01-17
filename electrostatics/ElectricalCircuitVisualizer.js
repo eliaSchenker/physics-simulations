@@ -1,5 +1,5 @@
 class ElectricalCircuitVisualizer {
-    constructor(renderer, updateEvent) {
+    constructor(renderer, onConnectionsUpdateEvent) {
         this.interval = setInterval(this.tick.bind(this), 0.01);
         this.renderer = renderer;
         this.renderer.cameraPosition = new Vector2(3.16, 0.08);
@@ -41,7 +41,7 @@ class ElectricalCircuitVisualizer {
 
         this.resistors = [r1, r2, r3, r4, r5, r6];
 
-        this.updateEvent = updateEvent;
+        this.onConnectionsUpdateEvent = onConnectionsUpdateEvent;
 
         this.isConnecting = false;
         //testResistor.addConnection(testResistor2);
@@ -58,7 +58,11 @@ class ElectricalCircuitVisualizer {
 
 
     initUI() {
-        this.addButton = new UIButton(true, new Vector2(10, 10), "Add", "20px Arial", (function() {this.toggleMode("add"); }).bind(this), "left", "top");
+        this.addButton = new UIButton(true, new Vector2(10, 10), "Add", "20px Arial", 
+        (function() {
+            this.resistors.push(new Resistor(new Vector2(0 ,0),  parseInt(prompt("Bitte den Widerstandin Ohm angeben."))));
+            this.renderer.isDragging = false;
+        }).bind(this), "left", "top");
         this.editButton = new UIButton(true, new Vector2(70, 10), "Edit", "20px Arial", (function() {this.toggleMode("edit"); }).bind(this), "left", "top");
         this.connectButton = new UIButton(true, new Vector2(130, 10), "Connect", "20px Arial", (function() {this.toggleMode("connect"); }).bind(this), "left", "top");
         this.rotateButton = new UIButton(true, new Vector2(230, 10), "Rotate", "20px Arial", (function() {this.toggleMode("rotate"); }).bind(this), "left", "top");
@@ -103,6 +107,7 @@ class ElectricalCircuitVisualizer {
                     if(this.isConnecting) {
                         this.isConnecting = false; 
                         this.connectionObject.addConnection(this.endPoint); 
+                        this.onConnectionsUpdateEvent();
                     }
                 }).bind(this));
             this.renderer.globalMouseUpEvent = (function() {this.isConnecting = false;}).bind(this);
@@ -125,11 +130,16 @@ class ElectricalCircuitVisualizer {
             if(this.currentMode == "") {
                 resistorDrawObject.addInteractionEvents(undefined, (function(e) { this.resistors[tempIndex].position = e}).bind(this));
             }else if(this.currentMode == "edit") {
-                resistorDrawObject.addInteractionEvents((function() { this.resistors[tempIndex].value = parseInt(prompt("Bitte den Widerstand in Ohm angeben:", ""));renderer.isDragging = false;}).bind(this));
+                resistorDrawObject.addInteractionEvents(
+                    (function() { 
+                        this.resistors[tempIndex].value = parseInt(prompt("Bitte den Widerstand in Ohm angeben:", ""));
+                        this.renderer.isDragging = false;
+                        this.onConnectionsUpdateEvent();
+                    }).bind(this));
             }else if(this.currentMode == "rotate") {
                 resistorDrawObject.addInteractionEvents((function() { this.resistors[tempIndex].rotation += this.resistors[tempIndex].rotation == -Math.PI / 2 ? Math.PI / 2 : -Math.PI / 2}).bind(this));
             }else if(this.currentMode == "delete") {
-                resistorDrawObject.addInteractionEvents((function() { this.deleteResistor(tempIndex)}).bind(this));
+                resistorDrawObject.addInteractionEvents((function() { this.deleteResistor(tempIndex); this.onConnectionsUpdateEvent();}).bind(this));
             }else if(this.currentMode == "connect") {
                 resistorDrawObject.addInteractionEvents(undefined, (function(e) { 
                     this.isConnecting = true; 
@@ -138,7 +148,9 @@ class ElectricalCircuitVisualizer {
                     undefined,
                     (function() {
                         if(this.isConnecting) {
-                            this.isConnecting = false; this.connectionObject.addConnection(this.resistors[tempIndex])
+                            this.isConnecting = false; 
+                            this.connectionObject.addConnection(this.resistors[tempIndex]); 
+                            this.onConnectionsUpdateEvent();
                         }
                     }).bind(this));
             }
@@ -166,12 +178,6 @@ class ElectricalCircuitVisualizer {
         this.rotateButton.color = this.currentMode == "rotate" ? "#3d87ff" : "#D3D3D3";
         this.deleteButton.color = this.currentMode == "delete" ? "#3d87ff" : "#D3D3D3";
 
-        //this.reff = this.calculateEffectiveResistance();
-        this.updateEvent();
-
-
-        //Calculate reff math
-        this.reffMath = "<math><mrow><m"
 
         this.renderer.render_frame();
     }
@@ -235,7 +241,7 @@ class ElectricalCircuitVisualizer {
                     for (let k = 0; k < circuitLines.length; k++) {
                         let tempIndexI = i;
                         let tempIndexJ = j;
-                        circuitLines[k].addInteractionEvents((function() { this.deleteConnection(array[tempIndexI], childrenConnection[tempIndexJ])}).bind(this));
+                        circuitLines[k].addInteractionEvents((function() { this.deleteConnection(array[tempIndexI], childrenConnection[tempIndexJ]); this.onConnectionsUpdateEvent();}).bind(this));
                     }
                 }
 
@@ -250,6 +256,8 @@ class ElectricalCircuitVisualizer {
         let startPoint;
         if(circuitObject1 instanceof CircuitStartPoint || circuitObject1 instanceof CircuitEndPoint) {
             let angle = circuitObject1.position.angleTo(circuitObject2.position);
+            startPoint = circuitObject1.position.moveAtAngle(angle, 1);
+            /*
             if((angle < Math.PI / 4 && angle > 0) || (angle > Math.PI * 2 - Math.PI / 4 && angle < Math.PI * 2)) {
                 startPoint = new Vector2(circuitObject1.position.x + 1, circuitObject1.position.y);
             }else if(angle > Math.PI / 4 && angle < Math.PI / 2 + Math.PI / 4) {
@@ -258,7 +266,7 @@ class ElectricalCircuitVisualizer {
                 startPoint = new Vector2(circuitObject1.position.x - 1, circuitObject1.position.y);
             }else {
                 startPoint = new Vector2(circuitObject1.position.x, circuitObject1.position.y - 1);
-            }
+            }*/
         }else if(circuitObject1 instanceof Resistor) {
             startPoint = circuitObject1.getLineOutputPoint();
         }
@@ -266,6 +274,8 @@ class ElectricalCircuitVisualizer {
         let endPoint;
         if(circuitObject2 instanceof CircuitStartPoint || circuitObject2 instanceof CircuitEndPoint) {
             let angle = circuitObject2.position.angleTo(circuitObject1.position);
+            endPoint = circuitObject2.position.moveAtAngle(angle, 1);
+            /*
             if((angle < Math.PI / 4 && angle > 0) || (angle > Math.PI * 2 - Math.PI / 4 && angle < Math.PI * 2)) {
                 endPoint = new Vector2(circuitObject2.position.x + 1, circuitObject2.position.y);
             }else if(angle > Math.PI / 4 && angle < Math.PI / 2 + Math.PI / 4) {
@@ -274,7 +284,7 @@ class ElectricalCircuitVisualizer {
                 endPoint = new Vector2(circuitObject2.position.x - 1, circuitObject2.position.y);
             }else {
                 endPoint = new Vector2(circuitObject2.position.x, circuitObject2.position.y - 1);
-            }
+            }*/
         }else if(circuitObject2 instanceof Resistor) {
             endPoint = circuitObject2.getLineInputPoint();
         }
@@ -300,8 +310,13 @@ class ElectricalCircuitVisualizer {
             return undefined;
         }
 
+        let safteyCounter = 0;
         while(dataStructure.connections[0].connections[0].type != "end" || dataStructure.connections.length != 1) {
             this.iteratethroughChildren(dataStructure);
+            if(safteyCounter == 100) {
+                this.changesMade = [];
+                break;
+            }
         }
 
         this.changesMade.reverse();
@@ -309,7 +324,7 @@ class ElectricalCircuitVisualizer {
         return dataStructure.connections[0].value;
     }
 
-    generateRefMathML(layer) {
+    generateRefMathML(layer, useValues=true) {
         if(this.changesMade.length == 0) {
             return undefined;
         }
@@ -326,8 +341,8 @@ class ElectricalCircuitVisualizer {
             }
         }
         
-        let object1Value = id1FoundLayer == -1 ? this.changesMade[layer].object1.value + "Ω" : this.generateRefMathML(id1FoundLayer);
-        let object2Value = id2FoundLayer == -1 ? this.changesMade[layer].object2.value+ "Ω" : this.generateRefMathML(id2FoundLayer);
+        let object1Value = id1FoundLayer == -1 ? useValues ? this.changesMade[layer].object1.value + "Ω" : this.changesMade[layer].object1.rValue : this.generateRefMathML(id1FoundLayer, useValues);
+        let object2Value = id2FoundLayer == -1 ? useValues ? this.changesMade[layer].object2.value + "Ω" : this.changesMade[layer].object2.rValue : this.generateRefMathML(id2FoundLayer, useValues);
 
         if(this.changesMade[layer].type == 's') {
             return "<mn>" + object1Value + "</mn><mo>+</mo><mn>" + object2Value + "</mn>";
@@ -339,7 +354,7 @@ class ElectricalCircuitVisualizer {
 
     calculatePartialAmperageVoltage(layer=0, voltage=100) {
         if(this.changesMade.length == 0) {
-            return undefined;
+            return false;
         }
         let item = this.changesMade[layer];
         let id1 = item.object1.id;
@@ -381,6 +396,37 @@ class ElectricalCircuitVisualizer {
         if(id2FoundLayer != -1) {
             this.calculatePartialAmperageVoltage(id2FoundLayer, volt2);
         }
+
+        return true;
+    }
+
+    generateAmperageVoltageMathML() {
+        let finalResistors = {}
+        for (let i = 0; i < this.changesMade.length; i++) {
+            let item = this.changesMade[i];
+
+            if(item.object1.rValue != "" && finalResistors[item.object1.id] == undefined) {
+                let resistorIndex = parseInt(item.object1.rValue.match(/\d+/)[0]);
+                finalResistors[item.object1.id] = {index: resistorIndex, voltage:  Math.round(item.object1.volt * 1000) / 1000, amperage: Math.round(item.object1.amp * 1000) / 1000, resistance:  Math.round(item.object1.value * 1000) / 1000}
+            } 
+
+            if(item.object2.rValue != "" && finalResistors[item.object2.id] == undefined) {
+                let resistorIndex = parseInt(item.object2.rValue.match(/\d+/)[0]);
+                finalResistors[item.object2.id] = {index: resistorIndex, voltage: Math.round(item.object2.volt * 1000) / 1000, amperage: Math.round(item.object2.amp * 1000) / 1000, resistance:  Math.round(item.object2.value * 1000) / 1000}
+            } 
+        }
+        let values = [];
+        for (var key in finalResistors){
+            values.push(finalResistors[key]);
+        }
+        let result = [];
+
+        for (let i = 0; i < values.length; i++) {
+            result.push("<math><mrow><msub><mi>U</mi><mn>" + values[i].index + 
+            "</mn></msub><mo>=</mo><msub><mi>R</mi><mn>" + values[i].index + 
+            "</mn></msub><mo>*</mo><msub><mi>I</mi><mn>" + values[i].index + "</mn></msub><mo>=</mo><mn>" + values[i].resistance + "Ω</mn><mo>*</mo><mn>" + values[i].amperage + "A</mn><mo>=</mo><mn>" + values[i].voltage + "V</mn></mrow></math>");
+        }
+        return result;
     }
 
     hasInvalidConnections(point) {
@@ -440,7 +486,11 @@ class ElectricalCircuitVisualizer {
             }else if(point instanceof CircuitEndPoint) {
                 objectType = "end";
             }
-            this.temporaryDict.push([point, {id: this.makeid(), type: objectType, value: point.value, connections:[], position: point.position}]);
+            let rValue = "";
+            if(objectType == "res") {
+                rValue = "R" + (this.resistors.indexOf(point) + 1);
+            }
+            this.temporaryDict.push([point, {id: this.makeid(), type: objectType, value: point.value, connections:[], position: point.position, rValue:rValue}]);
         }
         for (let i = 0; i < point.connections.length; i++) {
             this.iterateTroughConnectionsAndFillDict(point.connections[i]);
@@ -460,6 +510,8 @@ class ElectricalCircuitVisualizer {
             //Serielle schaltung
             if(point.connections.length == 1 && point.connections[0].type == "res") {
                 this.changesMade.push(ObjectUtil.clone({type: 's', object1: point, object2: point.connections[0]}));
+
+                point.rValue = "";
                 point.value += point.connections[0].value;
                 point.connections = point.connections[0].connections;
                 return;
@@ -472,6 +524,8 @@ class ElectricalCircuitVisualizer {
                         if(point.connections[i].connections.length == 1 && point.connections[j].connections.length == 1) {
                             if(point.connections[i].connections[0].id == point.connections[j].connections[0].id) {
                                 this.changesMade.push(ObjectUtil.clone({type: 'p', object1: point.connections[i], object2: point.connections[j]}));
+
+                                point.connections[i].rValue = "";
                                 point.connections[i].value = 1 / (1 / point.connections[i].value + 1 / point.connections[j].value);
                                 point.connections.splice(j, 1);
                                 return;
