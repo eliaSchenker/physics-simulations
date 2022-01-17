@@ -23,6 +23,7 @@ function initPage() {
             </button>
             <div class="dropdown-content">
                 <li><a href="https://eliaschenker.com/physics-simulations/electrostatics/electricfield.html">Electric Field Visualization</a></li>
+                <li><a href="https://eliaschenker.com/physics-simulations/electrostatics/electricalcircuit.html">Electrical Circuit Visualization</a></li>
             </div>
         </div>
         <div class="dropdown">
