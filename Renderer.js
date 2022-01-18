@@ -20,6 +20,8 @@ class Renderer {
         this.cameraYSize = cameraYSize;
         this.isDragging = true;
         this.zoomAmount = 1;
+        //Avoid double click selecting text on the page
+        canvas.onselectstart = function() { return false; }
         this.canDrag = true;
         this.debug_draw_colliders = false;
         this.lastFrameDraw = new Date();
