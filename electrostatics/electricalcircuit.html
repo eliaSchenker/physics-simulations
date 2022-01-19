@@ -12,17 +12,31 @@
     <h1>Electrical Circuit Visualization</h1>
     <p>Hint: You can add/edit/connect/rotate/delete resistors using the according mode (gray buttons on the top of the panel). Connections can be deleted aswell.</p>
     <canvas width="750" height="750" id="canvas"></canvas>
-    <div id="controlDiv">
-        <b>Effektiver Wiederstand</b>
-        <div id="resEffMath" style="font-size:150%;">
+    <div id="controlDiv" style="width: 50%;"> 
+        <div id="mainDiv">
+            <b>Effektiver Wiederstand</b><br>
+            <button onclick="startRefTutorial();" id="reffTutorialButton">Wie wird das berechnet?</button>
+            <div id="resEffMath" style="font-size:150%;">
+            </div>
+            <b>Teilströme / Teilspannungen</b>
+            <p>Spannung (Volt):</p>
+            <input type="number" id="voltInput" onchange="updateUI();" onkeypress="updateUI();" onkeydown="updateUI();" onkeyup="updateUI();" value=8><br><br>
+            <button>Wie wird das berechnet?</button>
+            <div id="ampVoltPartMath" style="font-size:150%;">
+                <math>
+            
+                </math>
+            </div>
         </div>
-        <b>Teilströme / Teilspannungen</b>
-        <p>Spannung (Volt):</p>
-        <input type="number" id="voltInput" onchange="updateUI();" onkeypress="updateUI();" onkeydown="updateUI();" onkeyup="updateUI();" value=8><br><br>
-        <div id="ampVoltPartMath" style="font-size:150%;">
-            <math>
-          
-            </math>
+        <div id="refTutorialDiv" style="display:none;">
+            <h1>Berechnungsweg: Effektiver Widerstand</h1>
+            <button onclick="previousRefTutorialStep();" id="refPreviousStep">Vorheriger Schritt</button>
+            <button onclick="nextRefTutorialStep();" id="refNextStep">Nächster Schritt</button>
+            <button onclick="exitRefTutorial();">Exit</button><br><br>
+            <p id="refTutorialHint"></p>
+        </div>
+        <div id="amperageVoltageTutorial" style="display:none;">
+            <h1>Berechnungsweg: Teilströme und Teilspannungen</h1>
         </div>
     </div>
 </body>
@@ -39,6 +53,8 @@
 <script>
     let sim;
     let renderer;
+    let refTutorialStep = 0;
+
     function resetSimulation() {
 
         if(sim != undefined) {
@@ -76,12 +92,176 @@
             for (let i = 0; i < ampVoltMathMLArray.length; i++) {
                 document.getElementById("ampVoltPartMath").innerHTML += "<div>" + ampVoltMathMLArray[i] + "</div>";
             }
-           
+
+            document.getElementById("reffTutorialButton").disabled = false;
         }else {
             document.getElementById("resEffMath").innerHTML = "<math><msub><mi>R</mi><mi>eff</mi></msub><mo>=</mo><mi>Berechnung nicht möglich</mi></math>";
             document.getElementById("ampVoltPartMath").innerHTML = "<math><mi>Berechnung nicht möglich</mi></math>";
+
+            document.getElementById("reffTutorialButton").disabled = true;
         }
         MathJax.typesetPromise()
+    }
+
+    function startRefTutorial() {
+        document.getElementById("refTutorialDiv").style.display = "block";
+        document.getElementById("mainDiv").style.display = "none";
+        refTutorialStep = 0;
+        document.getElementById("refPreviousStep").disabled = true;
+        loadCurrentRefTutorialStep();
+    }
+
+    function exitRefTutorial() {
+        document.getElementById("refTutorialDiv").style.display = "none";
+        document.getElementById("mainDiv").style.display = "block";
+        for (let i = 0; i < sim.resistors.length; i++) {
+            sim.resistors[i].color = "#000000";
+        }
+    }
+
+    function nextRefTutorialStep() {
+        refTutorialStep += 1;
+        //If tutorial is at the last step disable the next button / if it is at the first step disable the previous button
+        document.getElementById("refNextStep").disabled = refTutorialStep == sim.changesMade.length - 1;
+        document.getElementById("refPreviousStep").disabled = refTutorialStep == 0;
+        loadCurrentRefTutorialStep();
+    }
+
+    function previousRefTutorialStep() {
+        refTutorialStep -= 1;
+        //If tutorial is at the last step disable the next button / if it is at the first step disable the previous button
+        document.getElementById("refNextStep").disabled = refTutorialStep == sim.changesMade.length - 1;
+        document.getElementById("refPreviousStep").disabled = refTutorialStep == 0;
+        loadCurrentRefTutorialStep();
+    }
+
+    function loadCurrentRefTutorialStep() {
+        let changesMadeReversed = sim.changesMade.slice().reverse();
+        let change = changesMadeReversed[refTutorialStep];
+
+        //Which resistors should be marked with a color
+        let toMarkResistors1 = [];
+        let toMarkResistors2 = [];
+
+        //Get the sub resistors of two resistor groups if they are not single resistors (rValue is -1)
+        if(change.object1.rValue != -1) {
+            toMarkResistors1 = [change.object1.rValue];
+        }else {
+            toMarkResistors1 = sim.getSubRValues(sim.changesMade.length - refTutorialStep - 1, true);
+
+        }
+
+        if(change.object2.rValue != -1) {
+            toMarkResistors2 = [change.object2.rValue];
+        }else {
+            toMarkResistors2 = sim.getSubRValues(sim.changesMade.length - refTutorialStep - 1, false);
+        }
+
+        for (let i = 0; i < sim.resistors.length; i++) {
+            sim.resistors[i].color = "#000000";
+            if(toMarkResistors1.includes(i + 1)) {
+                sim.resistors[i].color = "#FF0000";
+
+            }else if(toMarkResistors2.includes(i + 1)) {
+                sim.resistors[i].color = "#0000FF";
+            }
+        }
+
+        let hintText = document.getElementById("refTutorialHint");
+        hintText.innerHTML = "";
+        if(refTutorialStep == 0) {
+            hintText.innerHTML = "Um den effektiven Widerstand zu berechnen, suchen wir in dem Schaltkreis Widerstände, welche einen simplen seriellen/parallelen Schaltkreis bilden.<br>"; 
+        }
+        
+        let rValuesFirstResistor = "";
+        for (let i = 0; i < toMarkResistors1.length; i++) {
+            rValuesFirstResistor += toMarkResistors1[i];
+        }
+
+        let rValuesSecondResistor = "";
+        for (let i = 0; i < toMarkResistors2.length; i++) {
+            rValuesSecondResistor += toMarkResistors2[i];
+        }
+
+        hintText.innerHTML += "Im " + ((refTutorialStep == 0) ? "ersten" : (refTutorialStep == sim.changesMade.length - 1) ? "letzten" : "nächsten") + " Schritt ";
+        
+        let resistanceSymbols =  "<math><msub style=\"color:red;\"><mi>R</mi><mn>" + rValuesFirstResistor + "</mn></sub></math>" +
+                " und " + "<math style=\"font-size:150%;\"><msub style=\"color:blue;\"><mi>R</mi><mn>" + rValuesSecondResistor + "</mn></sub></math>";
+
+        if(change.object1.rValue != -1 && change.object2.rValue != -1) {
+            hintText.innerHTML += "nehmen wir diese zuvor berechneten Zusammenschlüsse von Widerständen, " + resistanceSymbols + ", und rechnen ihren gemeinsamen Widerstand aus.<br>";
+        }else if(change.object1.rValue != -1) {
+            hintText.innerHTML += "nehmen wir diesen einzelnen Widerstand und den Zusammenschluss der zuvor berechneten Widerstände, " + resistanceSymbols + ", und rechnen ihren gemeinsamen Widerstand aus.<br>";
+        }else if(change.object2.rValue != -1) {
+            hintText.innerHTML += "nehmen wir diesen Zusammenschluss der zuvor berechneten Widerstände und den einzelnen Widerstand, " + resistanceSymbols + ", und rechnen ihren gemeinsamen Widerstand aus.<br>";
+        }else{  
+            hintText.innerHTML = "nehmen wir diese zwei einzelnen Widerstände, " + resistanceSymbols + ", und rechnen ihren gemeinsamen Widerstand aus.<br>";
+        }
+
+        if(change.type == 's') {
+            hintText.innerHTML += "Da die zwei Widerstände <b>seriell</b> geschaltet sind, müssen diese nur addiert werden:<br>";
+        }else {
+            hintText.innerHTML += "Da die zwei Widerstände <b>parallel</b> geschaltet sind, muss der Kehrwert der beiden Kehrwerte der Widerstände genommen werden:<br>";
+        }
+
+        let mathText = "";
+        mathText += "<div class=\"mathdiv\"><math>" + (refTutorialStep == sim.changesMade.length - 1 ? "<msub><mi>R</mi><mi>eff</mi></msub><mo>=</mo>" : "") + "<msub><mi>R</mi><mn>" + rValuesFirstResistor + rValuesSecondResistor + "</mn></msub><mo>=</mo>";
+        if(change.type == 's') {
+            mathText += "<msub style=\"color:red;\"><mi>R</mi><mn>" + rValuesFirstResistor + "</mn></msub><mo>+</mo>" + 
+            "<msub style=\"color:blue;\"><mi>R</mi><mn>" + rValuesSecondResistor + "</mn></msub><mo>=</mo>" + 
+            "<mn style=\"color:red;\">" + change.object1.value + "Ω</mn><mo>+</mo><mn style=\"color:blue;\">" + change.object2.value + "Ω</mn><mo>=</mo><mn>" +
+            (change.object1.value + change.object2.value) + "Ω</math></div>";
+        }else {
+            let resistance = 1 / ((1 / change.object1.value) + (1 / change.object2.value));
+            mathText += `<mfrac>
+                            <mn>1</mn>
+                            <mi>
+                                <mfrac>
+                                    <mn>1</mn>
+                                    <mi>
+                                        <msub style=\"color:red;\">
+                                            <mi>R</mi>
+                                            <mn>` + rValuesFirstResistor + `</mn>
+                                        </msub>
+                                    </mfrac>
+                                <mfrac>
+                                    <mn>1</mn>
+                                    <msub style=\"color:blue;\">
+                                        <mi>R</mi>
+                                        <mn>` + rValuesSecondResistor + `</mn>
+                                    </msub>
+                                </mfrac>
+                            </mi>
+                        </mfrac>
+                        <mo>=</mo>
+                        <mfrac>
+                            <mn>1</mn>
+                            <mi>
+                                <mfrac>
+                                    <mn>1</mn>
+                                    <mn style=\"color:red;\">` + change.object1.value + `Ω</mn>
+                                </mfrac>
+                                <mfrac>
+                                    <mn>1</mn>
+                                    <mn style=\"color:blue;\">` + change.object2.value + `Ω</mn>
+                                </mfrac>
+                            </mi>
+                        </mfrac>
+                        <mo>=</mo>
+                        <mn>` + resistance + `Ω</mn>
+                        </math></div>`;
+        }
+
+        if(refTutorialStep == sim.changesMade.length - 1) {
+            let mathMLCode = sim.generateRefMathML(0);
+            let mathMLCodeWithoutValues = sim.generateRefMathML(0, false);
+            console.log(mathMLCode);
+            mathText += "<p>Dies kann auch als eine Formel dargestellt werden:</p><div class=\"mathdiv\"><math><msub><mi>R</mi><mi>eff</mi></msub><mo>=</mo>" + mathMLCodeWithoutValues + "<mo>=</mo>" + mathMLCode + "<mo>=</mo><mn>" + sim.calculateEffectiveResistance() + "Ω</mn></math></div>";
+        }
+
+        hintText.innerHTML += mathText;
+
+        MathJax.typesetPromise();
     }
 </script>
 </html>

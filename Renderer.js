@@ -19,6 +19,7 @@ class Renderer {
         this.cameraXSize = cameraXSize;
         this.cameraYSize = cameraYSize;
         this.isDragging = true;
+        this.interactable = true;
         this.zoomAmount = 1;
         //Avoid double click selecting text on the page
         canvas.onselectstart = function() { return false; }
@@ -182,6 +183,9 @@ class Renderer {
      * @param {*} e Eventdata
      */
     onscrollwheel(e) {
+        if(!this.interactable) {
+            return;
+        }
         e.preventDefault();
         if(e.deltaY > 0) {
             this.zoomAmount += 0.01;
@@ -212,6 +216,9 @@ class Renderer {
      * @param {*} e Eventdata
      */
     onmousedown(e) {
+      if(!this.interactable) {
+        return;
+      }
       this.isDragging = true;
       this.originalCameraPosition = this.cameraPosition;
 
@@ -234,6 +241,9 @@ class Renderer {
      * @param {*} e Eventdata
      */
     onmousemove(e) {
+      if(!this.interactable) {
+        return;
+      }
       if(this.isDragging && this.canDrag) {
         //Calculate position of the mouse on the canvas
         let coords = this.getEventCoordinates(e);

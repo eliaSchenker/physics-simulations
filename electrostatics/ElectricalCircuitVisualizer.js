@@ -44,6 +44,10 @@ class ElectricalCircuitVisualizer {
         this.onConnectionsUpdateEvent = onConnectionsUpdateEvent;
 
         this.isConnecting = false;
+        
+        this.interactable = true;
+
+        this.refTutorialStep = 0;
         //testResistor.addConnection(testResistor2);
         //testResistor2.addConnection(this.endPoint)
 
@@ -60,7 +64,10 @@ class ElectricalCircuitVisualizer {
     initUI() {
         this.addButton = new UIButton(true, new Vector2(10, 10), "Add", "20px Arial", 
         (function() {
-            this.resistors.push(new Resistor(new Vector2(0 ,0),  parseInt(prompt("Bitte den Widerstandin Ohm angeben."))));
+            let input = this.getIntInput("Bitte den Widerstandin Ohm angeben.");
+            if(input != undefined) {
+                this.resistors.push(new Resistor(new Vector2(0 ,0), input));
+            }
             this.renderer.isDragging = false;
         }).bind(this), "left", "top");
         this.editButton = new UIButton(true, new Vector2(70, 10), "Edit", "20px Arial", (function() {this.toggleMode("edit"); }).bind(this), "left", "top");
@@ -121,20 +128,30 @@ class ElectricalCircuitVisualizer {
         this.renderer.toRenderObjects.push(new TextRenderObject("25px Arial", "+", this.startPoint.position, "center"));
         this.renderer.toRenderObjects.push(new TextRenderObject("25px Arial", "-", this.endPoint.position, "center"));
 
+        this.renderer.interactable = this.interactable;
+
         //Renderer all the resistors
         for (let i = 0; i < this.resistors.length; i++) {
             let resistorCornerPoints = this.resistors[i].getCornerPoints();
-            let resistorDrawObject = new PolygonRenderObject([resistorCornerPoints[0], resistorCornerPoints[2], resistorCornerPoints[3], resistorCornerPoints[1]]);
+
+            //If the resistor color is not black make it half filled
+            let isResistorFilled = this.resistors[i].color != "#000000";
+            let resistorColor = this.resistors[i].color == "#000000" ? "#000000" : this.resistors[i].color + "7F";
+
+            let resistorDrawObject = new PolygonRenderObject([resistorCornerPoints[0], resistorCornerPoints[2], resistorCornerPoints[3], resistorCornerPoints[1]], isResistorFilled, resistorColor);
             let tempIndex = i;
 
             if(this.currentMode == "") {
                 resistorDrawObject.addInteractionEvents(undefined, (function(e) { this.resistors[tempIndex].position = e}).bind(this));
             }else if(this.currentMode == "edit") {
                 resistorDrawObject.addInteractionEvents(
-                    (function() { 
-                        this.resistors[tempIndex].value = parseInt(prompt("Bitte den Widerstand in Ohm angeben:", ""));
+                    (function() {
+                        let input = this.getIntInput("Bitte den Widerstand in Ohm angeben:");
+                        if(input != undefined) {
+                            this.resistors[tempIndex].value = input;
+                            this.onConnectionsUpdateEvent();
+                        }
                         this.renderer.isDragging = false;
-                        this.onConnectionsUpdateEvent();
                     }).bind(this));
             }else if(this.currentMode == "rotate") {
                 resistorDrawObject.addInteractionEvents((function() { this.resistors[tempIndex].rotation += this.resistors[tempIndex].rotation == -Math.PI / 2 ? Math.PI / 2 : -Math.PI / 2}).bind(this));
@@ -180,6 +197,12 @@ class ElectricalCircuitVisualizer {
 
 
         this.renderer.render_frame();
+    }
+
+    getIntInput(message) {
+        let input = prompt(message);
+        let result = parseInt(input);
+        return isNaN(result) ? undefined : result;
     }
 
     deleteResistor(index) {
@@ -294,13 +317,18 @@ class ElectricalCircuitVisualizer {
 
     /**
      * Calculates the line points between two points in the circuit
-     * @param {Vector2} point1 
-     * @param {Vector2} point2 
+     * @param {Vector2} point1 The first point
+     * @param {Vector2} point2 The second point
+     * @param {Boolean} direction The direction (right=false, left=true)
      */
-    calculateCircuitLine(point1, point2) {
+    calculateCircuitLine(point1, point2, direction) {
         return [new LineRenderObject(point1, point2, 1)];
     }
 
+    /**
+     * Calculates the effective resistance
+     * @returns The effective resistance
+     */
     calculateEffectiveResistance() {
         this.changesMade = [];
 
@@ -324,7 +352,13 @@ class ElectricalCircuitVisualizer {
         return dataStructure.connections[0].value;
     }
 
-    generateRefMathML(layer, useValues=true) {
+    /**
+     * Generates the math ml of the reff
+     * @param {Number} layer The start layer of the changesMade
+     * @param {Boolean} useValues Use the values in the equations or just the variables
+     * @returns The MathML code
+     */
+    generateRefMathML(layer, useValues=true, maximumLayer=this.changesMade.length) {
         if(this.changesMade.length == 0) {
             return undefined;
         }
@@ -332,7 +366,7 @@ class ElectricalCircuitVisualizer {
         let id2 = this.changesMade[layer].object2.id;
         let id1FoundLayer = -1;
         let id2FoundLayer = -1;
-        for (let i = layer + 1; i < this.changesMade.length; i++) {
+        for (let i = layer + 1; i < maximumLayer; i++) {
             if(id1FoundLayer == -1 && (this.changesMade[i].object1.id == id1 || this.changesMade[i].object2.id == id1)) {
                 id1FoundLayer = i;
             }
@@ -341,8 +375,14 @@ class ElectricalCircuitVisualizer {
             }
         }
         
-        let object1Value = id1FoundLayer == -1 ? useValues ? this.changesMade[layer].object1.value + "Ω" : this.changesMade[layer].object1.rValue : this.generateRefMathML(id1FoundLayer, useValues);
-        let object2Value = id2FoundLayer == -1 ? useValues ? this.changesMade[layer].object2.value + "Ω" : this.changesMade[layer].object2.rValue : this.generateRefMathML(id2FoundLayer, useValues);
+        let object1Value = id1FoundLayer == -1 ? useValues ? this.changesMade[layer].object1.value + "Ω" : this.changesMade[layer].object1.rValue != -1 ? "R" + this.changesMade[layer].object1.rValue : '' : this.generateRefMathML(id1FoundLayer, useValues, maximumLayer);
+        let object2Value = id2FoundLayer == -1 ? useValues ? this.changesMade[layer].object2.value + "Ω" : this.changesMade[layer].object2.rValue != -1 ? "R" + this.changesMade[layer].object2.rValue : '' : this.generateRefMathML(id2FoundLayer, useValues, maximumLayer);
+
+        if(object1Value == "") {
+            object1Value = "Rest";
+        }else if(object2Value == "") {
+            object2Value = "Rest";
+        }
 
         if(this.changesMade[layer].type == 's') {
             return "<mn>" + object1Value + "</mn><mo>+</mo><mn>" + object2Value + "</mn>";
@@ -352,6 +392,12 @@ class ElectricalCircuitVisualizer {
         }
     }
 
+    /**
+     * Generates the amperages and voltages of the resistors in the hierarchy
+     * @param {Number} layer The start layer of the changesMade
+     * @param {Number} voltage The voltage put through the circuit
+     * @returns True/False if the calculation is successfull
+     */
     calculatePartialAmperageVoltage(layer=0, voltage=100) {
         if(this.changesMade.length == 0) {
             return false;
@@ -400,18 +446,22 @@ class ElectricalCircuitVisualizer {
         return true;
     }
 
+    /**
+     * Returns mathml code of the amperage and voltage
+     * @returns The MathML code
+     */
     generateAmperageVoltageMathML() {
         let finalResistors = {}
         for (let i = 0; i < this.changesMade.length; i++) {
             let item = this.changesMade[i];
 
-            if(item.object1.rValue != "" && finalResistors[item.object1.id] == undefined) {
-                let resistorIndex = parseInt(item.object1.rValue.match(/\d+/)[0]);
+            if(item.object1.rValue != -1 && finalResistors[item.object1.id] == undefined) {
+                let resistorIndex = item.object1.rValue;
                 finalResistors[item.object1.id] = {index: resistorIndex, voltage:  Math.round(item.object1.volt * 1000) / 1000, amperage: Math.round(item.object1.amp * 1000) / 1000, resistance:  Math.round(item.object1.value * 1000) / 1000}
             } 
 
-            if(item.object2.rValue != "" && finalResistors[item.object2.id] == undefined) {
-                let resistorIndex = parseInt(item.object2.rValue.match(/\d+/)[0]);
+            if(item.object2.rValue != -1 && finalResistors[item.object2.id] == undefined) {
+                let resistorIndex = item.object2.rValue;
                 finalResistors[item.object2.id] = {index: resistorIndex, voltage: Math.round(item.object2.volt * 1000) / 1000, amperage: Math.round(item.object2.amp * 1000) / 1000, resistance:  Math.round(item.object2.value * 1000) / 1000}
             } 
         }
@@ -419,8 +469,11 @@ class ElectricalCircuitVisualizer {
         for (var key in finalResistors){
             values.push(finalResistors[key]);
         }
-        let result = [];
 
+        values.sort((a, b)=> a.index - b.index);
+
+        let result = [];
+        
         for (let i = 0; i < values.length; i++) {
             result.push("<math><mrow><msub><mi>U</mi><mn>" + values[i].index + 
             "</mn></msub><mo>=</mo><msub><mi>R</mi><mn>" + values[i].index + 
@@ -429,6 +482,11 @@ class ElectricalCircuitVisualizer {
         return result;
     }
 
+    /**
+     * Checks if a circuitObject has a valid connection to the end
+     * @param {CircuitObject} point The point
+     * @returns True/False - is the connection valid
+     */
     hasInvalidConnections(point) {
         if(point.connections.length == 0 && point.type != "end") {
             return true;
@@ -450,6 +508,11 @@ class ElectricalCircuitVisualizer {
         return newPoint;
     }
 
+    /**
+     * Generates a random id with a length
+     * @param {Number} length The length
+     * @returns The id
+     */
     makeid(length=5) {
         var result           = '';
         var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -461,6 +524,11 @@ class ElectricalCircuitVisualizer {
        return result;
     }
 
+    /**
+     * Checks if the temporaryDict has a certain point
+     * @param {CircuitObject} point 
+     * @returns 
+     */
     hasKey(point) {
         for (let i = 0; i < this.temporaryDict.length; i++) {
             if(this.temporaryDict[i][0] == point) {
@@ -470,6 +538,11 @@ class ElectricalCircuitVisualizer {
         return false;
     }
 
+    /**
+     * Returns a value from the temporaryDict with a point
+     * @param {CircuitObject} point The point
+     * @returns The value of the dictionary
+     */
     getByPoint(point) {
         for (let i = 0; i < this.temporaryDict.length; i++) {
             if(this.temporaryDict[i][0] == point) {
@@ -478,6 +551,10 @@ class ElectricalCircuitVisualizer {
         }
     }
 
+    /**
+     * Iterate through the connections and fill the tempDictionary
+     * @param {CircuitObject} point The start point 
+     */
     iterateTroughConnectionsAndFillDict(point) {
         if(!this.hasKey(point)) {
             let objectType = "res";
@@ -486,9 +563,10 @@ class ElectricalCircuitVisualizer {
             }else if(point instanceof CircuitEndPoint) {
                 objectType = "end";
             }
-            let rValue = "";
+            //Insert the rValue into the point (represents which resistor this is, -1 meaning its either a combination of resistors or a start, end point)
+            let rValue = -1;
             if(objectType == "res") {
-                rValue = "R" + (this.resistors.indexOf(point) + 1);
+                rValue = this.resistors.indexOf(point) + 1;
             }
             this.temporaryDict.push([point, {id: this.makeid(), type: objectType, value: point.value, connections:[], position: point.position, rValue:rValue}]);
         }
@@ -505,13 +583,17 @@ class ElectricalCircuitVisualizer {
         return newPoint;
     }
 
+    /**
+     * Iterate through the children of a node in the circuit hierarchy and check for seriell or parallel ciruits and replace them with one resistor
+     * @param {*} point The start point
+     */
     iteratethroughChildren(point) {
         if(point.type != "start") {
             //Serielle schaltung
             if(point.connections.length == 1 && point.connections[0].type == "res") {
                 this.changesMade.push(ObjectUtil.clone({type: 's', object1: point, object2: point.connections[0]}));
 
-                point.rValue = "";
+                point.rValue = -1;
                 point.value += point.connections[0].value;
                 point.connections = point.connections[0].connections;
                 return;
@@ -525,7 +607,7 @@ class ElectricalCircuitVisualizer {
                             if(point.connections[i].connections[0].id == point.connections[j].connections[0].id) {
                                 this.changesMade.push(ObjectUtil.clone({type: 'p', object1: point.connections[i], object2: point.connections[j]}));
 
-                                point.connections[i].rValue = "";
+                                point.connections[i].rValue = -1;
                                 point.connections[i].value = 1 / (1 / point.connections[i].value + 1 / point.connections[j].value);
                                 point.connections.splice(j, 1);
                                 return;
@@ -542,7 +624,57 @@ class ElectricalCircuitVisualizer {
         }
     }
 
+    /**
+     * Returns the sub r values (sub resistors) of any resistor in the changesMade array
+     */
+    getSubRValues(layer, isObject1) {
+        let result = [];
+        let initialItem = isObject1 ? this.changesMade[layer].object1 : this.changesMade[layer].object2;
 
+        for (let i = layer + 1; i < this.changesMade.length; i++) {
+            let item = this.changesMade[i];
+
+            if(item.object1.id == initialItem.id || item.object2.id == initialItem.id) {
+                if(item.object1.rValue == -1) {
+                    result = result.concat(this.getSubRValues(i, true));
+                }else {
+                    result.push(item.object1.rValue);
+                }
+
+                if(item.object2.rValue == -1) {
+                    result = result.concat(this.getSubRValues(i, false));
+                }else {
+                    result.push(item.object2.rValue);
+                }
+                break;
+            }
+        }
+        return result;
+    }
+
+    updateReffTutorialColors(step=0) {
+        let values = [];
+        for(let key in this.changesMade) {
+            values.push(this.changesMade[key]);
+        }
+        let appearingIndices = [];
+        for (let i = 0; i < step; i++) {
+            appearingIndices.push(this.changesMade[i].object1.rValue - 1);
+            appearingIndices.push(this.changesMade[i].object2.rValue - 1);
+        }
+        for (let i = 0; i < this.resistors.length; i++) {
+            if(appearingIndices.includes(i)) {
+                this.resistors[i].color = "#FF0000";
+            }else {
+                this.resistors[i].color = "#000000";
+            }
+        }
+    }
+
+    getReffTutorialStep(step=0) {
+        let changesMadeReversed = this.changesMade.slice().reverse();
+        
+    }
 }
 
 class CircuitObject {
@@ -553,6 +685,7 @@ class CircuitObject {
     constructor(position) {
         this.position = position;
         this.connections = [];
+        this.color = "#000000";
     }
 
     /**
