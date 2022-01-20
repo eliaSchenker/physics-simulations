@@ -15,13 +15,13 @@
     <div id="controlDiv" style="width: 50%;"> 
         <div id="mainDiv">
             <b>Effektiver Wiederstand</b><br>
-            <button onclick="startRefTutorial();" id="reffTutorialButton">Wie wird das berechnet?</button>
+            <button onclick="startRefTutorial();" id="reffTutorialButton">Berechnungsweg anzeigen</button><br><br>
             <div id="resEffMath" style="font-size:150%;">
             </div>
-            <b>Teilströme / Teilspannungen</b>
+            <b>Teilströme / Teilspannungen</b><br>
+            <button onclick="startAmpVoltTutorial();" id="ampVoltTutorialButton">Berechnungsweg anzeigen</button><br>
             <p>Spannung (Volt):</p>
-            <input type="number" id="voltInput" onchange="updateUI();" onkeypress="updateUI();" onkeydown="updateUI();" onkeyup="updateUI();" value=8><br><br>
-            <button>Wie wird das berechnet?</button>
+            <input type="number" id="voltInput" onchange="updateUI();" onkeypress="updateUI();" onkeydown="updateUI();" onkeyup="updateUI();" value=8 min=0><br><br>
             <div id="ampVoltPartMath" style="font-size:150%;">
                 <math>
             
@@ -35,8 +35,12 @@
             <button onclick="exitRefTutorial();">Exit</button><br><br>
             <p id="refTutorialHint"></p>
         </div>
-        <div id="amperageVoltageTutorial" style="display:none;">
+        <div id="ampVoltTutorialDiv" style="display:none;">
             <h1>Berechnungsweg: Teilströme und Teilspannungen</h1>
+            <button onclick="previousAmpVoltTutorialStep();" id="ampVoltPreviousStep">Vorheriger Schritt</button>
+            <button onclick="nextAmpVoltTutorialStep();" id="ampVoltNextStep">Nächster Schritt</button>
+            <button onclick="exitAmpVoltTutorial();">Exit</button><br><br>
+            <p id="ampVoltTutorialHint"></p>
         </div>
     </div>
 </body>
@@ -54,6 +58,7 @@
     let sim;
     let renderer;
     let refTutorialStep = 0;
+    let ampVoltTutorialStep = 0;
 
     function resetSimulation() {
 
@@ -77,6 +82,7 @@
     function updateUI() {
         
         let effRes = sim.calculateEffectiveResistance();
+        let volt = document.getElementById("voltInput").value;
         if(effRes != undefined) {
             let generatedMath =  sim.generateRefMathML(0, true);
             let generatedMathWithoutValues = sim.generateRefMathML(0, false);
@@ -85,30 +91,38 @@
             }else {
                document.getElementById("resEffMath").innerHTML = "<math><msub><mi>R</mi><mi>eff</mi></msub><mo>=</mo><mn>" + effRes + "Ω</mn></math>";
             }
-            let result = sim.calculatePartialAmperageVoltage(0, document.getElementById("voltInput").value);
+            let result = sim.calculatePartialAmperageVoltage(0, volt);
            
             let ampVoltMathMLArray = sim.generateAmperageVoltageMathML();
-            document.getElementById("ampVoltPartMath").innerHTML = "";
+            document.getElementById("ampVoltPartMath").innerHTML = "<div><math><mi>U</mi><mo>=</mo><mn>" + volt + "V</mn></math></div><div><math><mi>I</mi><mo>=</mo><mn>" + (Math.round(volt / effRes * 1000) / 1000) + "A</mn></math></div><br>";
             for (let i = 0; i < ampVoltMathMLArray.length; i++) {
                 document.getElementById("ampVoltPartMath").innerHTML += "<div>" + ampVoltMathMLArray[i] + "</div>";
             }
 
             document.getElementById("reffTutorialButton").disabled = false;
+            document.getElementById("ampVoltTutorialButton").disabled = false;
         }else {
             document.getElementById("resEffMath").innerHTML = "<math><msub><mi>R</mi><mi>eff</mi></msub><mo>=</mo><mi>Berechnung nicht möglich</mi></math>";
             document.getElementById("ampVoltPartMath").innerHTML = "<math><mi>Berechnung nicht möglich</mi></math>";
 
             document.getElementById("reffTutorialButton").disabled = true;
+            document.getElementById("ampVoltTutorialButton").disabled = true;
         }
         MathJax.typesetPromise()
     }
 
+
+
+    //Effective Resistance Tutorial Code
     function startRefTutorial() {
         document.getElementById("refTutorialDiv").style.display = "block";
         document.getElementById("mainDiv").style.display = "none";
         refTutorialStep = 0;
-        document.getElementById("refPreviousStep").disabled = true;
+        updateRefTutorialPrevNextButtons();
         loadCurrentRefTutorialStep();
+
+        renderer.uiInteractable = false;
+        renderer.objectsInteractable = false;
     }
 
     function exitRefTutorial() {
@@ -117,22 +131,27 @@
         for (let i = 0; i < sim.resistors.length; i++) {
             sim.resistors[i].color = "#000000";
         }
+        
+        renderer.uiInteractable = true;
+        renderer.objectsInteractable = true;
     }
 
     function nextRefTutorialStep() {
         refTutorialStep += 1;
-        //If tutorial is at the last step disable the next button / if it is at the first step disable the previous button
-        document.getElementById("refNextStep").disabled = refTutorialStep == sim.changesMade.length - 1;
-        document.getElementById("refPreviousStep").disabled = refTutorialStep == 0;
+        updateRefTutorialPrevNextButtons();
         loadCurrentRefTutorialStep();
     }
 
     function previousRefTutorialStep() {
         refTutorialStep -= 1;
-        //If tutorial is at the last step disable the next button / if it is at the first step disable the previous button
-        document.getElementById("refNextStep").disabled = refTutorialStep == sim.changesMade.length - 1;
-        document.getElementById("refPreviousStep").disabled = refTutorialStep == 0;
+        updateRefTutorialPrevNextButtons();
         loadCurrentRefTutorialStep();
+    }
+
+    function updateRefTutorialPrevNextButtons() {
+         //If tutorial is at the last step disable the next button / if it is at the first step disable the previous button
+         document.getElementById("refNextStep").disabled = refTutorialStep == sim.changesMade.length - 1;
+        document.getElementById("refPreviousStep").disabled = refTutorialStep == 0;
     }
 
     function loadCurrentRefTutorialStep() {
@@ -201,7 +220,7 @@
         if(change.type == 's') {
             hintText.innerHTML += "Da die zwei Widerstände <b>seriell</b> geschaltet sind, müssen diese nur addiert werden:<br>";
         }else {
-            hintText.innerHTML += "Da die zwei Widerstände <b>parallel</b> geschaltet sind, muss der Kehrwert der beiden Kehrwerte der Widerstände genommen werden:<br>";
+            hintText.innerHTML += "Da die zwei Widerstände <b>parallel</b> geschaltet sind, muss der Kehrwert der beiden Kehrwerte der Widerstände berechnet werden:<br>";
         }
 
         let mathText = "";
@@ -263,5 +282,280 @@
 
         MathJax.typesetPromise();
     }
+
+    //Amperage Voltage Tutorial Code
+    function startAmpVoltTutorial() {
+        document.getElementById("ampVoltTutorialDiv").style.display = "block";
+        document.getElementById("mainDiv").style.display = "none";
+        ampVoltTutorialStep = 0;
+        document.getElementById("ampVoltPreviousStep").disabled = true;
+        updateVoltAmpTutorialButtons();
+        loadCurrentAmpVoltTutorialStep();
+
+        renderer.uiInteractable = false;
+        renderer.objectsInteractable = false;
+    }
+
+    function exitAmpVoltTutorial() {
+        document.getElementById("ampVoltTutorialDiv").style.display = "none";
+        document.getElementById("mainDiv").style.display = "block";
+        for (let i = 0; i < sim.resistors.length; i++) {
+            sim.resistors[i].color = "#000000";
+        }
+        
+        renderer.uiInteractable = true;
+        renderer.objectsInteractable = true;
+    }
+
+    function nextAmpVoltTutorialStep() {
+        ampVoltTutorialStep += 1;
+        //If tutorial is at the last step disable the next button / if it is at the first step disable the previous button
+        document.getElementById("ampVoltNextStep").disabled = ampVoltTutorialStep == sim.changesMade.length - 1;
+        document.getElementById("ampVoltPreviousStep").disabled = ampVoltTutorialStep == 0;
+        loadCurrentAmpVoltTutorialStep();
+    }
+
+    function previousAmpVoltTutorialStep() {
+        ampVoltTutorialStep -= 1;
+        //If tutorial is at the last step disable the next button / if it is at the first step disable the previous button
+        document.getElementById("ampVoltNextStep").disabled = ampVoltTutorialStep == sim.changesMade.length - 1;
+        document.getElementById("ampVoltPreviousStep").disabled = ampVoltTutorialStep == 0;
+        loadCurrentAmpVoltTutorialStep();
+    }
+
+    function updateVoltAmpTutorialButtons() {
+         //If tutorial is at the last step disable the next button / if it is at the first step disable the previous button
+         document.getElementById("ampVoltNextStep").disabled = ampVoltTutorialStep == sim.changesMade.length - 1;
+        document.getElementById("ampVoltPreviousStep").disabled = ampVoltTutorialStep == 0;
+    }
+
+    function loadCurrentAmpVoltTutorialStep() {
+        let volt = document.getElementById("voltInput").value;
+        let reff = Math.round(sim.calculateEffectiveResistance() * 1000) / 1000;
+        let amperage = Math.round(volt / reff * 1000) / 1000;
+        sim.calculatePartialAmperageVoltage(0, volt);
+
+        let change = sim.changesMade[ampVoltTutorialStep];
+
+        //Which resistors should be marked with a color
+        let toMarkResistors1 = [];
+        let toMarkResistors2 = [];
+
+        //Get the sub resistors of two resistor groups if they are not single resistors (rValue is -1)
+        if(change.object1.rValue != -1) {
+            toMarkResistors1 = [change.object1.rValue];
+        }else {
+            toMarkResistors1 = sim.getSubRValues(ampVoltTutorialStep, true);
+
+        }
+
+        if(change.object2.rValue != -1) {
+            toMarkResistors2 = [change.object2.rValue];
+        }else {
+            toMarkResistors2 = sim.getSubRValues(ampVoltTutorialStep, false);
+        }
+
+        for (let i = 0; i < sim.resistors.length; i++) {
+            sim.resistors[i].color = "#000000";
+            if(toMarkResistors1.includes(i + 1)) {
+                sim.resistors[i].color = "#FF0000";
+
+            }else if(toMarkResistors2.includes(i + 1)) {
+                sim.resistors[i].color = "#0000FF";
+            }
+        }
+
+        let hintText = document.getElementById("ampVoltTutorialHint");
+        hintText.innerHTML = "";
+
+        if(ampVoltTutorialStep == 0) {
+            hintText.innerHTML += "Bevor die einzelnen Teilströme/Teilspannungen berechnet werden können, muss zuerst die Gesamtspannung und die Gesamtstromstärke berechnet werden. <br>";
+            hintText.innerHTML += "Da die Spannung bereits gegeben ist (" + volt + "V) muss nur noch die Stromstärke berechnet werden. Um diese zu berechnen, muss die Spannung durch den Widerstand, welcher auf die Schaltung wirkt (<math><msub><mi>R</mi><mi>eff</mi></msub></math>) geteilt werden:<br><br>";
+            hintText.innerHTML += "<div class=\"mathdiv\"><math><mi>U</mi><mo>=</mo><mn>" + volt + "V</mn></math></div>";
+            hintText.innerHTML += `<div class=\"mathdiv\">
+                                        <math>
+                                            <mi>I</mi>
+                                            <mo>=</mo>
+                                            <mfrac>
+                                                <mi>U</mi>
+                                                <msub>
+                                                    <mi>R</mi>
+                                                    <mi>eff</mi>
+                                                </msub>
+                                            </mfrac>
+                                            <mo>=</mo>
+                                            <mfrac>
+                                                <mi>` + volt + `V</mi>
+                                                <mi>` + reff + `Ω</mi>
+                                            </mfrac>
+                                            <mo>=</mo>
+                                            <mn>` + amperage + `A</mn>
+                                        </math>
+                                    </div><br>`;
+        }
+        
+        let rValuesFirstResistor = "";
+        for (let i = 0; i < toMarkResistors1.length; i++) {
+            rValuesFirstResistor += toMarkResistors1[i];
+        }
+
+        let rValuesSecondResistor = "";
+        for (let i = 0; i < toMarkResistors2.length; i++) {
+            rValuesSecondResistor += toMarkResistors2[i];
+        }
+        
+        let resistanceSymbols =  "<math><msub style=\"color:red;\"><mi>R</mi><mn>" + rValuesFirstResistor + "</mn></sub></math>" +
+                " und " + "<math style=\"font-size:150%;\"><msub style=\"color:blue;\"><mi>R</mi><mn>" + rValuesSecondResistor + "</mn></sub></math>";
+
+
+        if(change.type == 's') {
+            hintText.innerHTML += "Da die dargestellte Schaltung zwischen " + resistanceSymbols + " seriell ist, haben " + resistanceSymbols + " <b>die gleiche</b> Stromstärke und die Spannung wird entsprechend der Widerstände <b>aufgeteilt</b>:<br><br>";
+            let upperLevelVoltageVariable = ampVoltTutorialStep == 0 ? "<mi>I</mi>" : "<msub><mi>I</mi><mi>" + rValuesFirstResistor + rValuesSecondResistor + "</mi></msub>";
+            hintText.innerHTML += `<div class="mathdiv">
+                                        <math>
+                                            <msub style="color:red;">
+                                                <mi>I</mi>
+                                                <mi>` + rValuesFirstResistor + `</mi>
+                                            </msub>
+                                            <mo>=</mo>
+                                            <msub style="color:blue;">
+                                                <mi>I</mi>
+                                                <mi>` + rValuesSecondResistor + `</mi>
+                                            </msub>
+                                            <mo>=</mo>
+                                            ` + upperLevelVoltageVariable + `
+                                            <mo>=</mo>
+                                            <mn>` + change.object1.amp +`A</mn>
+                                        </math>
+                                    </div><br>
+                                    <div class="mathdiv">
+                                        <math>
+                                            <msub style="color:red;">
+                                                <mi>U</mi>
+                                                <mi>` + rValuesFirstResistor + `</mi>
+                                            </msub>
+                                            <mo>=</mo>
+                                            <msub style="color:red;">
+                                                <mi>R</mi>
+                                                <mi>` + rValuesFirstResistor + `</mi>
+                                            </msub>
+                                            <mo>*</mo>
+                                            <msub style="color:red;">
+                                                <mi>I</mi>
+                                                <mi>` + rValuesFirstResistor + `</mi>
+                                            </msub>
+                                            <mo>=</mo>
+                                            <mn>` + change.object1.value + `Ω</mn>
+                                            <mo>*</mo>
+                                            <mn>` + change.object1.amp + `A</mn>
+                                            <mo>=</mo>
+                                            <mn>` + change.object1.volt + `V</mn>
+                                        </math>    
+                                    </div><br>
+                                    <div class="mathdiv">
+                                        <math>
+                                            <msub style="color:blue;">
+                                                <mi>U</mi>
+                                                <mi>` + rValuesSecondResistor + `</mi>
+                                            </msub>
+                                            <mo>=</mo>
+                                            <msub style="color:blue">
+                                                <mi>R</mi>
+                                                <mi>` + rValuesSecondResistor + `</mi>
+                                            </msub>
+                                            <mo>*</mo>
+                                            <msub style="color:blue;">
+                                                <mi>I</mi>
+                                                <mi>` + rValuesSecondResistor + `</mi>
+                                            </msub>
+                                            <mo>=</mo>
+                                            <mn>` + change.object2.value + `Ω</mn>
+                                            <mo>*</mo>
+                                            <mn>` + change.object2.amp + `A</mn>
+                                            <mo>=</mo>
+                                            <mn>` + change.object2.volt + `V</mn>
+                                        </math>    
+                                    </div>
+                                        `;
+        }else {
+            hintText.innerHTML += "Da die dargestellte Schaltung zwischen " + resistanceSymbols + " parallel ist, haben " + resistanceSymbols + " <b>die gleiche</b> Spannung und die Stromstärke wird entsprechend der Widerstände <b>aufgeteilt</b>:<br><br>";
+            let upperLevelAmperageVariable = ampVoltTutorialStep == 0 ? "<mi>U</mi>" : "<msub><mi>U</mi><mi>" + rValuesFirstResistor + rValuesSecondResistor + "</mi></msub>";
+            hintText.innerHTML += `<div class="mathdiv">
+                                        <math>
+                                            <msub style="color:red;">
+                                                <mi>U</mi>
+                                                <mi>` + rValuesFirstResistor + `</mi>
+                                            </msub>
+                                            <mo>=</mo>
+                                            <msub style="color:blue;">
+                                                <mi>U</mi>
+                                                <mi>` + rValuesSecondResistor + `</mi>
+                                            </msub>
+                                            <mo>=</mo>
+                                            ` + upperLevelAmperageVariable + `
+                                            <mo>=</mo>
+                                            <mn>` + change.object1.volt +`V</mn>
+                                        </math>
+                                    </div><br>
+                                    <div class="mathdiv">
+                                        <math>
+                                            <msub style="color:red;">
+                                                <mi>I</mi>
+                                                <mi>` + rValuesFirstResistor + `</mi>
+                                            </msub>
+                                            <mo>=</mo>
+                                            <mfrac>
+                                                <msub style="color:red;">
+                                                    <mi>U</mi>
+                                                    <mi>` + rValuesFirstResistor + `</mi>
+                                                </msub>
+                                                <msub style="color:red;">
+                                                    <mi>R</mi>
+                                                    <mi>` + rValuesFirstResistor + `</mi>
+                                                </msub>
+                                            </mfrac>
+                                            <mo>=</mo>
+                                            <mfrac>
+                                                <mn>` + change.object1.volt + `V</mn>
+                                                <mn>` + change.object1.value + `Ω</mn>
+                                            </mfrac>
+                                            <mo>=</mo>
+                                            <mn>` + change.object1.amp + `A</mn>
+                                        </math>    
+                                    </div><br>
+                                    <div class="mathdiv">
+                                        <math>
+                                            <msub style="color:red;">
+                                                <mi>I</mi>
+                                                <mi>` + rValuesSecondResistor + `</mi>
+                                            </msub>
+                                            <mo>=</mo>
+                                            <mfrac>
+                                                <msub style="color:red;">
+                                                    <mi>U</mi>
+                                                    <mi>` + rValuesSecondResistor + `</mi>
+                                                </msub>
+                                                <msub style="color:red;">
+                                                    <mi>R</mi>
+                                                    <mi>` + rValuesSecondResistor + `</mi>
+                                                </msub>
+                                            </mfrac>
+                                            <mo>=</mo>
+                                            <mfrac>
+                                                <mn>` + change.object2.volt + `V</mn>
+                                                <mn>` + change.object2.value + `Ω</mn>
+                                            </mfrac>
+                                            <mo>=</mo>
+                                            <mn>` + change.object2.amp + `A</mn>
+                                        </math>    
+                                    </div>
+                                        `;
+        }
+
+
+
+        MathJax.typesetPromise();
+    }
+
 </script>
 </html>

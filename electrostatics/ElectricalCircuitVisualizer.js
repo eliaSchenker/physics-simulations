@@ -44,8 +44,6 @@ class ElectricalCircuitVisualizer {
         this.onConnectionsUpdateEvent = onConnectionsUpdateEvent;
 
         this.isConnecting = false;
-        
-        this.interactable = true;
 
         this.refTutorialStep = 0;
         //testResistor.addConnection(testResistor2);
@@ -127,8 +125,6 @@ class ElectricalCircuitVisualizer {
         this.renderer.toRenderObjects.push(endPointRenderObject);
         this.renderer.toRenderObjects.push(new TextRenderObject("25px Arial", "+", this.startPoint.position, "center"));
         this.renderer.toRenderObjects.push(new TextRenderObject("25px Arial", "-", this.endPoint.position, "center"));
-
-        this.renderer.interactable = this.interactable;
 
         //Renderer all the resistors
         for (let i = 0; i < this.resistors.length; i++) {
@@ -420,10 +416,10 @@ class ElectricalCircuitVisualizer {
             amp2 = volt2 / item.object2.value;
         }
 
-        item.object1.amp = amp1;
-        item.object1.volt = volt1;
-        item.object2.amp = amp2;
-        item.object2.volt = volt2;
+        item.object1.amp = Math.round(amp1 * 1000) / 1000;
+        item.object1.volt = Math.round(volt1 * 1000) / 1000;
+        item.object2.amp = Math.round(amp2 * 1000) / 1000;
+        item.object2.volt = Math.round(volt2 * 1000) / 1000;
 
         let id1FoundLayer = -1;
         let id2FoundLayer = -1;
@@ -457,12 +453,12 @@ class ElectricalCircuitVisualizer {
 
             if(item.object1.rValue != -1 && finalResistors[item.object1.id] == undefined) {
                 let resistorIndex = item.object1.rValue;
-                finalResistors[item.object1.id] = {index: resistorIndex, voltage:  Math.round(item.object1.volt * 1000) / 1000, amperage: Math.round(item.object1.amp * 1000) / 1000, resistance:  Math.round(item.object1.value * 1000) / 1000}
+                finalResistors[item.object1.id] = {index: resistorIndex, voltage:  item.object1.volt, amperage: item.object1.amp, resistance: item.object1.value}
             } 
 
             if(item.object2.rValue != -1 && finalResistors[item.object2.id] == undefined) {
                 let resistorIndex = item.object2.rValue;
-                finalResistors[item.object2.id] = {index: resistorIndex, voltage: Math.round(item.object2.volt * 1000) / 1000, amperage: Math.round(item.object2.amp * 1000) / 1000, resistance:  Math.round(item.object2.value * 1000) / 1000}
+                finalResistors[item.object2.id] = {index: resistorIndex, voltage: item.object1.volt, amperage: item.object2.amp, resistance:  item.object2.value}
             } 
         }
         let values = [];
@@ -608,7 +604,7 @@ class ElectricalCircuitVisualizer {
                                 this.changesMade.push(ObjectUtil.clone({type: 'p', object1: point.connections[i], object2: point.connections[j]}));
 
                                 point.connections[i].rValue = -1;
-                                point.connections[i].value = 1 / (1 / point.connections[i].value + 1 / point.connections[j].value);
+                                point.connections[i].value = Math.round(1 / (1 / point.connections[i].value + 1 / point.connections[j].value) * 1000) / 1000;
                                 point.connections.splice(j, 1);
                                 return;
                             }
