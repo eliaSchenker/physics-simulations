@@ -19,7 +19,11 @@ class Renderer {
         this.cameraXSize = cameraXSize;
         this.cameraYSize = cameraYSize;
         this.isDragging = true;
-        this.interactable = true;
+
+        this.cameraInteractable = true;
+        this.uiInteractable = true;
+        this.objectsInteractable = true;
+
         this.zoomAmount = 1;
         //Avoid double click selecting text on the page
         canvas.onselectstart = function() { return false; }
@@ -183,7 +187,7 @@ class Renderer {
      * @param {*} e Eventdata
      */
     onscrollwheel(e) {
-        if(!this.interactable) {
+        if(!this.cameraInteractable) {
             return;
         }
         e.preventDefault();
@@ -216,9 +220,6 @@ class Renderer {
      * @param {*} e Eventdata
      */
     onmousedown(e) {
-      if(!this.interactable) {
-        return;
-      }
       this.isDragging = true;
       this.originalCameraPosition = this.cameraPosition;
 
@@ -232,7 +233,9 @@ class Renderer {
       this.currentDragObject = this.getObjectsUnderMouse(this.originalX, this.originalY);
       //If the currentDragObject exists and its onClickEvent is not undefined, call it
       if(this.currentDragObject != undefined && this.currentDragObject.onClickEvent != undefined) {
-        this.currentDragObject.onClickEvent(this.canvasToWorldPosition(new Vector2(this.originalX, this.originalY)));
+          if(this.objectsInteractable) {
+            this.currentDragObject.onClickEvent(this.canvasToWorldPosition(new Vector2(this.originalX, this.originalY)));
+          }
       }
     }
 
@@ -241,9 +244,6 @@ class Renderer {
      * @param {*} e Eventdata
      */
     onmousemove(e) {
-      if(!this.interactable) {
-        return;
-      }
       if(this.isDragging && this.canDrag) {
         //Calculate position of the mouse on the canvas
         let coords = this.getEventCoordinates(e);
@@ -256,13 +256,17 @@ class Renderer {
 
         //If the currentDragObject is either undefined or doesn't have a dragEvent, move the camera
         if(this.currentDragObject == undefined || this.currentDragObject.onDragEvent == undefined) {
-            //Calculate the new camera position by adding the distance to the originalCameraPosition and accounting for the width of the canvas, the cameraXSize and the zoomAmount
-            this.cameraPosition = new Vector2(this.originalCameraPosition.x + distance1 / this.canvas.width * this.cameraXSize * this.zoomAmount, 
-                this.originalCameraPosition.y - distance2 / this.canvas.height * this.cameraYSize * this.zoomAmount);
-            this.render_frame();
+            if(this.cameraInteractable) {
+                //Calculate the new camera position by adding the distance to the originalCameraPosition and accounting for the width of the canvas, the cameraXSize and the zoomAmount
+                this.cameraPosition = new Vector2(this.originalCameraPosition.x + distance1 / this.canvas.width * this.cameraXSize * this.zoomAmount, 
+                    this.originalCameraPosition.y - distance2 / this.canvas.height * this.cameraYSize * this.zoomAmount);
+                this.render_frame();
+            }
         }else {
-            //If it does exist and has a dragEvent, call the event
-            this.currentDragObject.onDragEvent(this.canvasToWorldPosition(new Vector2(x, y)));
+            if(this.objectsInteractable) {
+                //If it does exist and has a dragEvent, call the event
+                this.currentDragObject.onDragEvent(this.canvasToWorldPosition(new Vector2(x, y)));
+            }
         }
       }
     }
@@ -295,6 +299,9 @@ class Renderer {
      * @param {Number} mouseY 
      */
     checkUIClickEvents(mouseX, mouseY) {
+        if(!this.uiInteractable) {
+            return;
+        }
         for(var i = 0;i<this.toRenderUI.length;i++) {
             if(this.toRenderUI[i] instanceof UIButton) {
                 let collider = this.toRenderUI[i].getCollisionRect(this.ctx, this);
@@ -322,14 +329,18 @@ class Renderer {
       let y = coords.y - this.canvas.offsetTop;
       if(this.currentDragObject != undefined) {
         if(this.currentDragObject.onMouseUpEvent != undefined) {
-            this.currentDragObject.onMouseUpEvent(this.canvasToWorldPosition(new Vector2(x, y)));
+            if(this.objectsInteractable) {
+                this.currentDragObject.onMouseUpEvent(this.canvasToWorldPosition(new Vector2(x, y)));
+            }
         }
         this.currentDragObject = undefined;
       }
       
       let mouseUpOverEventObject = this.getObjectsUnderMouse(x, y);
       if(mouseUpOverEventObject != undefined && mouseUpOverEventObject.onMouseOverUpEvent != undefined) {
+        if(this.objectsInteractable) {
           mouseUpOverEventObject.onMouseOverUpEvent(new Vector2(x, y));
+        }
       }
 
       if(this.globalMouseUpEvent != undefined) {
