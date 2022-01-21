@@ -338,9 +338,9 @@ class ElectricalCircuitVisualizer {
         while(dataStructure.connections[0].connections[0].type != "end" || dataStructure.connections.length != 1) {
             this.iteratethroughChildren(dataStructure);
             if(safteyCounter == 100) {
-                this.changesMade = [];
-                break;
+                return undefined;
             }
+            safteyCounter++;
         }
 
         this.changesMade.reverse();

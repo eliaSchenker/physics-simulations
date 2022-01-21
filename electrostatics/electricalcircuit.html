@@ -208,13 +208,13 @@
                 " und " + "<math style=\"font-size:150%;\"><msub style=\"color:blue;\"><mi>R</mi><mn>" + rValuesSecondResistor + "</mn></sub></math>";
 
         if(change.object1.rValue != -1 && change.object2.rValue != -1) {
-            hintText.innerHTML += "nehmen wir diese zuvor berechneten Zusammenschlüsse von Widerständen, " + resistanceSymbols + ", und rechnen ihren gemeinsamen Widerstand aus.<br>";
+            hintText.innerHTML += "nehmen wir diese zwei einzelnen Widerstände, " + resistanceSymbols + ", und rechnen ihren gemeinsamen Widerstand aus.<br>";
         }else if(change.object1.rValue != -1) {
             hintText.innerHTML += "nehmen wir diesen einzelnen Widerstand und den Zusammenschluss der zuvor berechneten Widerstände, " + resistanceSymbols + ", und rechnen ihren gemeinsamen Widerstand aus.<br>";
         }else if(change.object2.rValue != -1) {
             hintText.innerHTML += "nehmen wir diesen Zusammenschluss der zuvor berechneten Widerstände und den einzelnen Widerstand, " + resistanceSymbols + ", und rechnen ihren gemeinsamen Widerstand aus.<br>";
         }else{  
-            hintText.innerHTML = "nehmen wir diese zwei einzelnen Widerstände, " + resistanceSymbols + ", und rechnen ihren gemeinsamen Widerstand aus.<br>";
+            hintText.innerHTML = "nehmen wir diese zuvor berechneten Zusammenschlüsse von Widerständen, " + resistanceSymbols + ", und rechnen ihren gemeinsamen Widerstand aus.<br>";
         }
 
         if(change.type == 's') {
@@ -242,7 +242,8 @@
                                             <mi>R</mi>
                                             <mn>` + rValuesFirstResistor + `</mn>
                                         </msub>
-                                    </mfrac>
+                                </mfrac>
+                                <mo>+</mo>
                                 <mfrac>
                                     <mn>1</mn>
                                     <msub style=\"color:blue;\">
@@ -260,6 +261,7 @@
                                     <mn>1</mn>
                                     <mn style=\"color:red;\">` + change.object1.value + `Ω</mn>
                                 </mfrac>
+                                <mo>+</mo>
                                 <mfrac>
                                     <mn>1</mn>
                                     <mn style=\"color:blue;\">` + change.object2.value + `Ω</mn>
@@ -274,7 +276,6 @@
         if(refTutorialStep == sim.changesMade.length - 1) {
             let mathMLCode = sim.generateRefMathML(0);
             let mathMLCodeWithoutValues = sim.generateRefMathML(0, false);
-            console.log(mathMLCode);
             mathText += "<p>Dies kann auch als eine Formel dargestellt werden:</p><div class=\"mathdiv\"><math><msub><mi>R</mi><mi>eff</mi></msub><mo>=</mo>" + mathMLCodeWithoutValues + "<mo>=</mo>" + mathMLCode + "<mo>=</mo><mn>" + sim.calculateEffectiveResistance() + "Ω</mn></math></div>";
         }
 
@@ -370,7 +371,7 @@
 
         if(ampVoltTutorialStep == 0) {
             hintText.innerHTML += "Bevor die einzelnen Teilströme/Teilspannungen berechnet werden können, muss zuerst die Gesamtspannung und die Gesamtstromstärke berechnet werden. <br>";
-            hintText.innerHTML += "Da die Spannung bereits gegeben ist (" + volt + "V) muss nur noch die Stromstärke berechnet werden. Um diese zu berechnen, muss die Spannung durch den Widerstand, welcher auf die Schaltung wirkt (<math><msub><mi>R</mi><mi>eff</mi></msub></math>) geteilt werden:<br><br>";
+            hintText.innerHTML += "Da die Spannung bereits gegeben ist (" + volt + "V) muss nur noch die Stromstärke berechnet werden. Dazu muss die Spannung durch den Widerstand, welcher auf die Schaltung wirkt (<math><msub><mi>R</mi><mi>eff</mi></msub></math>) geteilt werden:<br><br>";
             hintText.innerHTML += "<div class=\"mathdiv\"><math><mi>U</mi><mo>=</mo><mn>" + volt + "V</mn></math></div>";
             hintText.innerHTML += `<div class=\"mathdiv\">
                                         <math>
@@ -409,18 +410,18 @@
 
 
         if(change.type == 's') {
-            hintText.innerHTML += "Da die dargestellte Schaltung zwischen " + resistanceSymbols + " seriell ist, haben " + resistanceSymbols + " <b>die gleiche</b> Stromstärke und die Spannung wird entsprechend der Widerstände <b>aufgeteilt</b>:<br><br>";
-            let upperLevelVoltageVariable = ampVoltTutorialStep == 0 ? "<mi>I</mi>" : "<msub><mi>I</mi><mi>" + rValuesFirstResistor + rValuesSecondResistor + "</mi></msub>";
+            hintText.innerHTML += "Da die dargestellte Schaltung zwischen " + resistanceSymbols + " seriell ist, haben " + resistanceSymbols + " <b>die gleiche</b> Stromstärke, und die Spannung wird entsprechend den Widerständen <b>aufgeteilt</b>:<br><br>";
+            let upperLevelVoltageVariable = ampVoltTutorialStep == 0 ? "<mi>I</mi>" : "<msub><mi>I</mi><mn>" + rValuesFirstResistor + rValuesSecondResistor + "</mn></msub>";
             hintText.innerHTML += `<div class="mathdiv">
                                         <math>
                                             <msub style="color:red;">
                                                 <mi>I</mi>
-                                                <mi>` + rValuesFirstResistor + `</mi>
+                                                <mn>` + rValuesFirstResistor + `</mn>
                                             </msub>
                                             <mo>=</mo>
                                             <msub style="color:blue;">
                                                 <mi>I</mi>
-                                                <mi>` + rValuesSecondResistor + `</mi>
+                                                <mn>` + rValuesSecondResistor + `</mn>
                                             </msub>
                                             <mo>=</mo>
                                             ` + upperLevelVoltageVariable + `
@@ -432,17 +433,17 @@
                                         <math>
                                             <msub style="color:red;">
                                                 <mi>U</mi>
-                                                <mi>` + rValuesFirstResistor + `</mi>
+                                                <mn>` + rValuesFirstResistor + `</mn>
                                             </msub>
                                             <mo>=</mo>
                                             <msub style="color:red;">
                                                 <mi>R</mi>
-                                                <mi>` + rValuesFirstResistor + `</mi>
+                                                <mn>` + rValuesFirstResistor + `</mn>
                                             </msub>
                                             <mo>*</mo>
                                             <msub style="color:red;">
                                                 <mi>I</mi>
-                                                <mi>` + rValuesFirstResistor + `</mi>
+                                                <mn>` + rValuesFirstResistor + `</mn>
                                             </msub>
                                             <mo>=</mo>
                                             <mn>` + change.object1.value + `Ω</mn>
@@ -456,17 +457,17 @@
                                         <math>
                                             <msub style="color:blue;">
                                                 <mi>U</mi>
-                                                <mi>` + rValuesSecondResistor + `</mi>
+                                                <mn>` + rValuesSecondResistor + `</mn>
                                             </msub>
                                             <mo>=</mo>
                                             <msub style="color:blue">
                                                 <mi>R</mi>
-                                                <mi>` + rValuesSecondResistor + `</mi>
+                                                <mn>` + rValuesSecondResistor + `</mn>
                                             </msub>
                                             <mo>*</mo>
                                             <msub style="color:blue;">
                                                 <mi>I</mi>
-                                                <mi>` + rValuesSecondResistor + `</mi>
+                                                <mn>` + rValuesSecondResistor + `</mn>
                                             </msub>
                                             <mo>=</mo>
                                             <mn>` + change.object2.value + `Ω</mn>
@@ -478,18 +479,18 @@
                                     </div>
                                         `;
         }else {
-            hintText.innerHTML += "Da die dargestellte Schaltung zwischen " + resistanceSymbols + " parallel ist, haben " + resistanceSymbols + " <b>die gleiche</b> Spannung und die Stromstärke wird entsprechend der Widerstände <b>aufgeteilt</b>:<br><br>";
+            hintText.innerHTML += "Da die dargestellte Schaltung zwischen " + resistanceSymbols + " parallel ist, haben " + resistanceSymbols + " <b>die gleiche</b> Spannung, und die Stromstärke wird entsprechend den Widerständen <b>aufgeteilt</b>:<br><br>";
             let upperLevelAmperageVariable = ampVoltTutorialStep == 0 ? "<mi>U</mi>" : "<msub><mi>U</mi><mi>" + rValuesFirstResistor + rValuesSecondResistor + "</mi></msub>";
             hintText.innerHTML += `<div class="mathdiv">
                                         <math>
                                             <msub style="color:red;">
                                                 <mi>U</mi>
-                                                <mi>` + rValuesFirstResistor + `</mi>
+                                                <mn>` + rValuesFirstResistor + `</mn>
                                             </msub>
                                             <mo>=</mo>
                                             <msub style="color:blue;">
                                                 <mi>U</mi>
-                                                <mi>` + rValuesSecondResistor + `</mi>
+                                                <mn>` + rValuesSecondResistor + `</mn>
                                             </msub>
                                             <mo>=</mo>
                                             ` + upperLevelAmperageVariable + `
@@ -501,17 +502,17 @@
                                         <math>
                                             <msub style="color:red;">
                                                 <mi>I</mi>
-                                                <mi>` + rValuesFirstResistor + `</mi>
+                                                <mn>` + rValuesFirstResistor + `</mn>
                                             </msub>
                                             <mo>=</mo>
                                             <mfrac>
                                                 <msub style="color:red;">
                                                     <mi>U</mi>
-                                                    <mi>` + rValuesFirstResistor + `</mi>
+                                                    <mn>` + rValuesFirstResistor + `</mn>
                                                 </msub>
                                                 <msub style="color:red;">
                                                     <mi>R</mi>
-                                                    <mi>` + rValuesFirstResistor + `</mi>
+                                                    <mn>` + rValuesFirstResistor + `</mn>
                                                 </msub>
                                             </mfrac>
                                             <mo>=</mo>
@@ -527,17 +528,17 @@
                                         <math>
                                             <msub style="color:red;">
                                                 <mi>I</mi>
-                                                <mi>` + rValuesSecondResistor + `</mi>
+                                                <mn>` + rValuesSecondResistor + `</mn>
                                             </msub>
                                             <mo>=</mo>
                                             <mfrac>
                                                 <msub style="color:red;">
                                                     <mi>U</mi>
-                                                    <mi>` + rValuesSecondResistor + `</mi>
+                                                    <mn>` + rValuesSecondResistor + `</mn>
                                                 </msub>
                                                 <msub style="color:red;">
                                                     <mi>R</mi>
-                                                    <mi>` + rValuesSecondResistor + `</mi>
+                                                    <mn>` + rValuesSecondResistor + `</mn>
                                                 </msub>
                                             </mfrac>
                                             <mo>=</mo>
