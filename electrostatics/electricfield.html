@@ -79,9 +79,11 @@
             <option value=1>1 Particle</option>
             <option value=2 selected>2 Particles</option>
             <option value=3>3 Particles</option>
+            <option value=4>4 Particles</option>
         </select><br><br>
         <input type="checkbox" id="linescolored" onchange="updateLineColoring();">
         <label for="linescolored">Line color represents force strength</label>
+
         <p>Particle Charges:</p>
         <div id="particleChargeContainer1">
             <b>Particle 1:</b><br>
@@ -101,6 +103,13 @@
             <label for="particle3positivecharge">Is charge positive?</label><br>
             <input type="range" id="particle3chargefactor" min=0.5 max=2 value=1 step=0.01 onchange="updateParticleCharges();">
         </div>
+        <div id="particleChargeContainer4">
+            <b>Particle 4:</b><br>
+            <input type="checkbox" id="particle4positivecharge" checked onchange="updateParticleCharges();">
+            <label for="particle4positivecharge">Is charge positive?</label><br>
+            <input type="range" id="particle4chargefactor" min=0.5 max=2 value=1 step=0.01 onchange="updateParticleCharges();">
+        </div>
+
 
         <p style="margin-top:50px;"><a href="https://eliaschenker.com" target="_blank">© Elia Schenker 2021</a></p>
     </div>
@@ -133,6 +142,8 @@
         var particle1 = new Particle(1.60217662e-19, 9.109e-31, 2.18e-15, new Vector2(-5.76e-15, 0));
         var particle2 = new Particle(-1.60217662e-19, 9.109e-31, 2.18e-15, new Vector2(0, 0));
         var particle3 = new Particle(1.60217662e-19, 9.109e-31, 2.18e-15, new Vector2(5.76e-15, 0));
+        var particle4 = new Particle(1.60217662e-19, 9.109e-31, 2.18e-15, new Vector2(5.76e-15, 0));
+
         var canvas = document.getElementById("canvas");
         renderer = new Renderer(canvas, 1e-14, 1e-14);
 
@@ -146,10 +157,21 @@
         }else if(particleAmount == 2) {
             sim.addParticle(particle1);
             sim.addParticle(particle3);
-        }else {
+        }else if(particleAmount == 3){
             sim.addParticle(particle1);
             sim.addParticle(particle2);
             sim.addParticle(particle3);
+        }else if(particleAmount == 4) {
+            particle1.position = new Vector2(-5e-15, 5e-15);
+            particle2.position = new Vector2(5e-15, 5e-15);
+            particle3.position = new Vector2(5e-15, -5e-15);
+            particle4.position = new Vector2(-5e-15, -5e-15);
+            renderer.zoomAmount = 4;
+
+            sim.addParticle(particle1);
+            sim.addParticle(particle2);
+            sim.addParticle(particle3);
+            sim.addParticle(particle4);
         }
 
 
@@ -163,16 +185,22 @@
         document.getElementById("particleChargeContainer1").style.display = 'none';
         document.getElementById("particleChargeContainer2").style.display = 'none';
         document.getElementById("particleChargeContainer3").style.display = 'none';
+        document.getElementById("particleChargeContainer4").style.display = 'none';
 
         if(particleAmount == 1) {
             document.getElementById("particleChargeContainer1").style.display = 'block';
         }else if(particleAmount == 2) {
             document.getElementById("particleChargeContainer1").style.display = 'block';
             document.getElementById("particleChargeContainer2").style.display = 'block';
-        }else {
+        }else if(particleAmount == 3){
             document.getElementById("particleChargeContainer1").style.display = 'block';
             document.getElementById("particleChargeContainer2").style.display = 'block';
             document.getElementById("particleChargeContainer3").style.display = 'block';
+        }else if(particleAmount == 4) {
+            document.getElementById("particleChargeContainer1").style.display = 'block';
+            document.getElementById("particleChargeContainer2").style.display = 'block';
+            document.getElementById("particleChargeContainer3").style.display = 'block';
+            document.getElementById("particleChargeContainer4").style.display = 'block';
         }
     }
 
@@ -180,6 +208,7 @@
         let particle1Charge = document.getElementById("particle1chargefactor").value * 1.60217662e-19;
         let particle2Charge = document.getElementById("particle2chargefactor").value * 1.60217662e-19;
         let particle3Charge = document.getElementById("particle3chargefactor").value * 1.60217662e-19;
+        let particle4Charge = document.getElementById("particle4chargefactor").value * 1.60217662e-19;
 
         if(!document.getElementById("particle1positivecharge").checked) {
             particle1Charge *= -1;
@@ -193,6 +222,10 @@
             particle3Charge *= -1;
         }
 
+        if(!document.getElementById("particle4positivecharge").checked) {
+            particle4Charge *= -1;
+        }
+
         let particleAmount = document.getElementById("particleAmount").selectedIndex + 1;
 
         if(particleAmount == 1) {
@@ -200,10 +233,15 @@
        }else if(particleAmount == 2) {
             sim.particles[0].charge = particle1Charge;
             sim.particles[1].charge = particle2Charge;
-       }else {
+       }else if(particleAmount == 3){
             sim.particles[0].charge = particle1Charge;
             sim.particles[1].charge = particle2Charge;
             sim.particles[2].charge = particle3Charge;
+       }else if(particleAmount == 4) {
+            sim.particles[0].charge = particle1Charge;
+            sim.particles[1].charge = particle2Charge;
+            sim.particles[2].charge = particle3Charge;
+            sim.particles[3].charge = particle4Charge;
        }
     }
 
