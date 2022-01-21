@@ -458,7 +458,7 @@ class ElectricalCircuitVisualizer {
 
             if(item.object2.rValue != -1 && finalResistors[item.object2.id] == undefined) {
                 let resistorIndex = item.object2.rValue;
-                finalResistors[item.object2.id] = {index: resistorIndex, voltage: item.object1.volt, amperage: item.object2.amp, resistance:  item.object2.value}
+                finalResistors[item.object2.id] = {index: resistorIndex, voltage: item.object2.volt, amperage: item.object2.amp, resistance:  item.object2.value}
             } 
         }
         let values = [];
