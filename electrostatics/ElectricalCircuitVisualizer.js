@@ -62,7 +62,7 @@ class ElectricalCircuitVisualizer {
     initUI() {
         this.addButton = new UIButton(true, new Vector2(10, 10), "Add", "20px Arial", 
         (function() {
-            let input = this.getIntInput("Bitte den Widerstandin Ohm angeben.");
+            let input = this.getIntInput("Bitte den Widerstand in Ohm angeben.");
             if(input != undefined) {
                 this.resistors.push(new Resistor(new Vector2(0 ,0), input));
             }
